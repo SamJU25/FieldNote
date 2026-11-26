@@ -15,7 +15,7 @@
       />
     </mask>
   </defs>
-  <rect width="64" height="64" rx="16" fill="#121822"/>
-  <rect x="14" y="10" width="36" height="44" fill="#eef2f8" mask="url(#fn-icon-cut)"/>
-  <path d="M38.4 12.6L47.8 22H40.1A1.7 1.7 0 0 1 38.4 20.3V12.6Z" fill="#6c8ff2"/>
+  <rect width="64" height="64" rx="16" fill="#141518"/>
+  <rect x="14" y="10" width="36" height="44" fill="#f4f5f7" mask="url(#fn-icon-cut)"/>
+  <path d="M38.4 12.6L47.8 22H40.1A1.7 1.7 0 0 1 38.4 20.3V12.6Z" fill="#4c8dff"/>
 </svg>

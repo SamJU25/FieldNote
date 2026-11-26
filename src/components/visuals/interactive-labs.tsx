@@ -354,8 +354,6 @@ export function OperatorLab({ visual }: { visual: OperatorLabVisual }) {
         <span className="lab-title">Operator explorer</span>
         {!customMode && current.frequency ? (
           <span className="lab-freq-tag">{current.frequency}</span>
-        ) : customMode ? (
-          <span className="lab-freq-tag">Live sandbox</span>
         ) : null}
       </div>
 

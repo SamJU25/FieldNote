@@ -326,7 +326,7 @@ export function LearningWorkspace() {
     document.documentElement.dataset.theme = progress.theme;
     const metaTheme = document.querySelector('meta[name="theme-color"]');
     if (metaTheme) {
-      metaTheme.setAttribute("content", progress.theme === "dark" ? "#0b0f17" : "#f6f4ef");
+      metaTheme.setAttribute("content", progress.theme === "dark" ? "#090a0b" : "#f6f4ef");
     }
   }, [progress, ready, showToast]);
 

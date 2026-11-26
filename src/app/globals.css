@@ -41,36 +41,36 @@
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --canvas: #0b0f17;
-  --surface: #121822;
-  --surface-soft: #1a2230;
-  --surface-grid: #0f151f;
-  --ink: #eef2f8;
-  --ink-soft: #c0cada;
-  --muted: #8a97ad;
-  --line: #232d3d;
-  --line-strong: #313e52;
-  --accent: #6c8ff2;
-  --accent-btn: #4468d6;
+  --canvas: #090a0b;
+  --surface: #141518;
+  --surface-soft: #1b1d21;
+  --surface-grid: #0d0e10;
+  --ink: #f4f5f7;
+  --ink-soft: #c7cbd4;
+  --muted: #8c929f;
+  --line: #23262c;
+  --line-strong: #32363f;
+  --accent: #4c8dff;
+  --accent-btn: #2563eb;
   --on-accent: #ffffff;
-  --accent-soft: rgba(108, 143, 242, 0.14);
-  --coral: #e86f52;
-  --coral-solid: #c24529;
-  --coral-soft: rgba(232, 111, 82, 0.14);
-  --ok: #3ea879;
-  --ok-solid: #1d7650;
-  --ok-soft: rgba(62, 168, 121, 0.14);
-  --heat-0: #1b2433;
-  --heat-1: #1b3b30;
-  --heat-2: #225c46;
-  --heat-3: #2b835f;
-  --heat-4: #3ea879;
-  --code-bg: #080c12;
-  --code-ink: #e8eef7;
-  --code-border: #242e3f;
-  --code-muted: #93a1b7;
-  --code-line-no: #8594ad;
-  --shadow: 0 12px 28px rgba(0, 0, 0, 0.42);
+  --accent-soft: rgba(59, 130, 246, 0.14);
+  --coral: #f07167;
+  --coral-solid: #c43c29;
+  --coral-soft: rgba(240, 113, 103, 0.14);
+  --ok: #34d399;
+  --ok-solid: #15803d;
+  --ok-soft: rgba(52, 211, 153, 0.14);
+  --heat-0: #1b1d21;
+  --heat-1: #133929;
+  --heat-2: #195e3f;
+  --heat-3: #228f5c;
+  --heat-4: #34d399;
+  --code-bg: #060708;
+  --code-ink: #f4f5f7;
+  --code-border: #23262c;
+  --code-muted: #989fab;
+  --code-line-no: #6f7682;
+  --shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -6682,7 +6682,7 @@ button {
 }
 
 :root[data-theme="dark"] .op-select {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238a97ad' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238c929f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 10px center;
 }

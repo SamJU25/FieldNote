@@ -27,13 +27,13 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#f6f4ef" },
-    { media: "(prefers-color-scheme: dark)", color: "#0b0f17" },
+    { media: "(prefers-color-scheme: dark)", color: "#090a0b" },
   ],
   width: "device-width",
   initialScale: 1,
 };
 
-const THEME_INIT_SCRIPT = `(function(){try{var k=['fieldnote-learning-progress-v7','fieldnote-learning-progress-v6','fieldnote-learning-progress-v5','fieldnote-learning-progress-v4','ai-ml-hub-progress-v3'];var t='';for(var i=0;i<k.length;i++){var r=localStorage.getItem(k[i]);if(!r)continue;var d=JSON.parse(r);var c=d&&(d.theme||(d.profile&&d.profile.theme));if(c==='dark'||c==='light'){t=c;break;}}if(!t){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}document.documentElement.dataset.theme=t;var m=document.querySelector('meta[name="theme-color"]');if(m){m.setAttribute('content',t==='dark'?'#0b0f17':'#f6f4ef');}}catch(e){}})();`;
+const THEME_INIT_SCRIPT = `(function(){try{var k=['fieldnote-learning-progress-v7','fieldnote-learning-progress-v6','fieldnote-learning-progress-v5','fieldnote-learning-progress-v4','ai-ml-hub-progress-v3'];var t='';for(var i=0;i<k.length;i++){var r=localStorage.getItem(k[i]);if(!r)continue;var d=JSON.parse(r);var c=d&&(d.theme||(d.profile&&d.profile.theme));if(c==='dark'||c==='light'){t=c;break;}}if(!t){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}document.documentElement.dataset.theme=t;var m=document.querySelector('meta[name="theme-color"]');if(m){m.setAttribute('content',t==='dark'?'#090a0b':'#f6f4ef');}}catch(e){}})();`;
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (

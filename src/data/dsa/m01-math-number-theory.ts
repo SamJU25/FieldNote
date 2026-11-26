@@ -8,11 +8,11 @@ export const dsaM01Lessons: Record<string, LessonContent> = {
     intro: {
       heading: "Digit Extraction & Integer Overflow",
       explanation: [
-        "Reverse `1534236469` inside a 32-bit signed integer and `rev * 10 + digit` silently wraps around past `2,147,483,647` before any post-check can catch it. Meanwhile, counting digits of `n = 0` with `while n > 0` returns `0` digits instead of `1`. Two arithmetic steps peel digits without converting to text: `n mod 10` reads the ones digit, and `floor(n / 10)` drops it.",
-        "Reassembling digits via `rev = rev * 10 + digit` drives digit counting, digit sums, reversal, and palindrome checks in `O(log10 n)` time and `O(1)` extra space—as long as you check 32-bit and 64-bit ceilings before multiplying by `10`.",
+        "Reverse `1534236469` in 32-bit signed math and `rev * 10 + digit` wraps past `2,147,483,647` before a post-check can catch it. Meanwhile, counting digits of `0` with `while n > 0` returns `0` instead of `1`.",
+        "Two integer steps peel digits from right to left without text conversion: `n mod 10` reads the ones digit and `floor(n / 10)` drops it, running in `O(log10 n)` time and `O(1)` space.",
       ],
       analogy:
-        "Numbered train cars sitting on a track work the same way: `n mod 10` reads the caboose at the rear, and `floor(n / 10)` uncouples it so the car ahead becomes the new caboose.",
+        "Train cars on a track: `n mod 10` reads the rear caboose, and `floor(n / 10)` uncouples it so the car ahead becomes the new caboose.",
       realWorldUses: [
         "Validating credit card, barcode, and ISBN check digits in constant extra memory",
         "Parsing and reversing numeric IDs in 32-bit or 64-bit systems without wraparound bugs",
@@ -20,19 +20,11 @@ export const dsaM01Lessons: Record<string, LessonContent> = {
     },
     sections: [
       {
-        heading: "Base-10 digit operations and signed integer limits",
+        heading: "Peeling base-10 digits with mod 10 and floor division",
         paragraphs: [
-          "Repeating `digit = n mod 10` and `n = floor(n / 10)` visits each decimal digit from right to left. Tracing `n = 1234` takes 4 passes: `(n=1234 -> d=4, rev=4)`, `(123 -> d=3, rev=43)`, `(12 -> d=2, rev=432)`, `(1 -> d=1, rev=4321)`, then stops at `n = 0`.",
-          "Signed 32-bit integers hold `-2,147,483,648` to `2,147,483,647`. Checking `rev > floor(INT_MAX / 10)` *before* multiplying catches `rev = 214748364, digit = 8` before `2,147,483,648` overflows; checking after `rev * 10 + digit` is already too late.",
+          "Repeating `digit = n mod 10` and `n = floor(n / 10)` visits digits from right to left. For `n = 1234`, four passes yield `4`, `3`, `2`, `1`, stopping at `n = 0`.",
+          "Zero is a one-digit number (`while n > 0` skips it), and negative `%` behaves differently across languages—handle `n == 0` and strip the sign into `abs(n)` first.",
         ],
-        code: [
-          "// Trace n = 1234: (1234 -> d=4, rev=4) -> (123 -> d=3, rev=43) -> (12 -> d=2, rev=432) -> (1 -> d=1, rev=4321)",
-          "// Broken overflow check (wraps BEFORE comparison in 32-bit):",
-          "rev = rev * 10 + digit; if rev > INT_MAX: return 0",
-          "// Working pre-check (rev = 214748364, digit = 8 caught before * 10):",
-          "if rev > 214748364 or (rev == 214748364 and digit > 7): return 0",
-        ],
-        output: "1234 -> 4321 | 1534236469 -> 0 (overflow prevented)",
         table: {
           caption: "Digit operations and fixed-width signed integer boundaries",
           headers: ["Operation or Bound", "Formula / Exact Value", "Key Detail"],
@@ -46,9 +38,67 @@ export const dsaM01Lessons: Record<string, LessonContent> = {
           ],
           highlightCol: 2,
         },
+        deepDive: [
+          {
+            label: "Why negative % and division differ in C/Java/JS vs Python",
+            paragraphs: [
+              "C++, Java, and JavaScript truncate integer division toward zero (`-123 / 10 == -12`), so the remainder keeps the dividend's sign (`-123 % 10 == -3`).",
+              "Python uses floor division toward negative infinity (`-123 // 10 == -13`), making `-123 % 10 == 7` (because `-13 * 10 + 7 = -123`).",
+            ],
+            bullets: [
+              "C++ / Java / JS: `-123 / 10 -> -12`, `-123 % 10 -> -3`.",
+              "Python: `-123 // 10 -> -13`, `-123 % 10 -> 7`.",
+              "Portable fix: save `sign` first (and guard `INT_MIN`), then peel digits from positive `abs(n)`.",
+            ],
+          },
+        ],
+        microCheck: {
+          prompt: "What does digit_count(0) return if you only run while n > 0 without an if n == 0 guard?",
+          code: "function digit_count(n):\n    cnt = 0\n    while n > 0:\n        cnt += 1\n        n = floor(n / 10)\n    return cnt",
+          options: [
+            { id: "a", label: "0" },
+            { id: "b", label: "1" },
+            { id: "c", label: "Infinite loop" },
+          ],
+          correctId: "a",
+          explanation: "When n = 0, the while n > 0 loop executes 0 times and returns 0 instead of 1.",
+        },
+      },
+      {
+        heading: "32-bit INT_MAX overflow pre-check vs wraparound",
+        paragraphs: [
+          "Signed 32-bit integers cap at `INT_MAX = 2,147,483,647`. Checking `rev > INT_MAX` *after* computing `rev * 10 + digit` fails because the multiplication wraps around first.",
+          "Compare `rev` against `floor(INT_MAX / 10) = 214748364` *before* multiplying by `10`: if `rev > 214748364` or `(rev == 214748364 and digit > 7)`, return `0` immediately.",
+        ],
+        code: [
+          "// Suppose 32-bit signed rev = 214748364 and next digit = 8",
+          "// 1) Broken post-check: wraps to -2147483648 BEFORE comparison!",
+          "bad_rev = rev * 10 + 8        // 2147483648 wraps -> -2147483648",
+          "if bad_rev > 2147483647: return 0  // FALSE (-2147483648 <= 2147483647)",
+          "",
+          "// 2) Working pre-check: rejects BEFORE * 10 executes",
+          "if rev > 214748364 or (rev == 214748364 and digit > 7): return 0",
+        ],
+        output: "digit=7 -> 2147483647 (ok) | digit=8 post-check -> -2147483648 (bug) | pre-check -> 0 (safe)",
+        predictOutput: {
+          prompt: "Predict what 32-bit post-check vs pre-check produces when rev = 214748364 and digit = 8:",
+          revealLabel: "Reveal 32-bit result & why",
+          why: "When `digit = 7`, `214748364 * 10 + 7 = 2147483647 == INT_MAX` fits. When `digit = 8`, `2147483648` overflows signed 32-bit and wraps to `-2147483648`, so a post-check `bad_rev > INT_MAX` evaluates `false`. The pre-check catches `rev == 214748364 and digit > 7` before multiplying and returns `0`.",
+        },
         callout: {
           kind: "WATCH OUT",
-          text: "Never test for overflow after computing `rev * 10 + digit`. In 32-bit or 64-bit signed arithmetic, the multiplication wraps around or overflows before the comparison executes. Always check against `floor(INT_MAX / 10)` first.",
+          text: "Never test for overflow after computing `rev * 10 + digit`. Always check against `floor(INT_MAX / 10)` before multiplying.",
+        },
+        microCheck: {
+          prompt: "In 32-bit reversal, rev = 214748364 and next digit = 7. What should the pre-check do?",
+          code: "if rev > 214748364 or (rev == 214748364 and digit > 7):\n    return 0\nrev = rev * 10 + digit",
+          options: [
+            { id: "a", label: "Reject and return 0" },
+            { id: "b", label: "Allow update to 2147483647 (INT_MAX)" },
+            { id: "c", label: "Wrap around to -2147483648" },
+          ],
+          correctId: "b",
+          explanation: "digit = 7 is NOT > 7, so 214748364 * 10 + 7 = 2147483647 equals INT_MAX and fits cleanly.",
         },
       },
     ],
@@ -425,6 +475,30 @@ export const dsaM01Lessons: Record<string, LessonContent> = {
         title: "Half-reversal avoids palindrome overflow",
         detail:
           "Reversing all digits of `2147483647` overflows 32-bit ints (`7463847412`). For numeric palindromes, reject `x < 0` or trailing zeros (`x != 0 and x mod 10 == 0`), then reverse only until `rev >= x` and compare `x == rev` or `x == floor(rev / 10)`.",
+      },
+    ],
+    predictChecks: [
+      {
+        prompt: "What happens when you reverse x = -2147483648 in signed 32-bit math by first running x = -x?",
+        code: "function reverse_bad(x):\n    sign = -1 if x < 0 else 1\n    x = -x   // x is -2147483648 (INT_MIN)",
+        options: [
+          { id: "a", label: "x cleanly becomes +2147483648" },
+          { id: "b", label: "-x overflows 32-bit INT_MAX (2147483647) before the loop even starts" },
+          { id: "c", label: "The loop returns 8463847412" },
+        ],
+        correctId: "b",
+        explanation: "INT_MAX is 2147483647, which is 1 smaller than |INT_MIN| = 2147483648. Negating INT_MIN overflows signed 32-bit ints unless handled early.",
+      },
+      {
+        prompt: "For half-reversal palindrome check on x = 12321, what are (x, rev) right when while x > rev stops?",
+        code: "rev = 0\nwhile x > rev:\n    rev = rev * 10 + (x % 10)\n    x = x // 10",
+        options: [
+          { id: "a", label: "x = 12, rev = 123 (and x == rev // 10 is true)" },
+          { id: "b", label: "x = 123, rev = 12" },
+          { id: "c", label: "x = 1, rev = 1232" },
+        ],
+        correctId: "a",
+        explanation: "Steps: (1232, 1) -> (123, 12) -> (12, 123). Now 12 > 123 is false; stripping the middle digit 3 via rev // 10 gives 12 == 12.",
       },
     ],
     practiceTask: {

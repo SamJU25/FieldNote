@@ -8,11 +8,11 @@ export const dsaM00Lessons: Record<string, LessonContent> = {
     intro: {
       heading: "What is DSA & How Does Memory Work?",
       explanation: [
-        "Write `backup = scores` and then change `scores[0] = 0`, and `backup[0]` changes to `0` too. Or scan a `100,000`-item list from slot `0` on every lookup and watch your app freeze. Both bugs happen because code ignores how values live in RAM. A **data structure** organizes values in memory for fast reads and updates, and an **algorithm** is the step-by-step recipe that transforms inputs into an answer.",
-        "Every variable lives inside numbered RAM bytes. Small scalars like integers copy by value into a fresh slot, whereas containers pass a **reference** (a memory address such as `0x108`) so two variable names can end up reading and mutating the exact same bytes.",
+        "Write `backup = scores` and change `scores[0] = 0`, and `backup[0]` becomes `0` too. A **data structure** organizes values in RAM for fast reads and updates; an **algorithm** is the step-by-step recipe that transforms inputs into an answer.",
+        "Scalars like integers copy by value into a fresh RAM slot, while containers pass a **reference** (a memory address like `0x108`) so two names can mutate the exact same bytes.",
       ],
       analogy:
-        "Think of organizing books on a library shelf versus following steps to find a title: the shelf layout is the data structure, and your search steps are the algorithm. Copying a sticky note with shelf number 0x108 lets two people edit the exact same book rather than buying a second copy.",
+        "Shelf layout is the data structure; search steps are the algorithm. Copying a sticky note with shelf `0x108` lets two people edit the same book instead of buying a second copy.",
       realWorldUses: [
         "Picking a memory layout that keeps hot lookups fast in web backends, games, and mobile apps",
         "Avoiding shared-mutation bugs when helper functions receive references instead of fresh copies",
@@ -20,22 +20,65 @@ export const dsaM00Lessons: Record<string, LessonContent> = {
     },
     sections: [
       {
-        heading: "Memory slots, addresses, and references",
+        heading: "RAM slots, value copies, and the overwrite swap bug",
         paragraphs: [
-          "Picture RAM as a long numbered street of fixed-width slots labeled in hexadecimal (`0x` marks base-16 addresses such as `0x100`, `0x104`, `0x108`). Each integer slot holds a fixed number of bits (commonly 32 or 64 bits).",
-          "Assigning a plain scalar variable (`b = a`) duplicates the value into a new slot, so changing `b` leaves `a` untouched. Assigning a container reference (`alias = box`) copies only the address `0x108`, so writing `alias[0] = 77` overwrites `box[0]` as well.",
+          "RAM is a street of fixed-width slots with hexadecimal addresses (`0x100`, `0x104`, `0x108`). Copying a scalar (`c = a`) duplicates the value into a new slot; copying a container (`alias = box`) copies only the address `0x108`.",
+          "Without a scratch slot `temp`, `a = b; b = a` overwrites `a` before saving it—so both variables end up holding `b`.",
         ],
         code: [
-          "// Scalar copy vs reference alias",
-          "a = 42; c = a; c = 99           // Valid independent copy -> a=42, c=99",
-          "box = [9, 5]; alias = box       // Shared address 0x108",
-          "alias[0] = 77                   // Mutates box[0] -> box=[77, 5]",
+          "// 1) Scalar copy vs shared reference at 0x108",
+          "a = 42; c = a; c = 99           // Independent slots -> a=42, c=99",
+          "box = [9, 5]; alias = box       // Both point to address 0x108",
+          "alias[0] = 77                   // Mutates 0x108 -> box=[77, 5]",
           "",
-          "// Broken swap vs working swap",
-          "a = b; b = a                    // Broken: overwrites a before saving -> a=17, b=17",
-          "temp = a; a = b; b = temp       // Working: saves 42 first -> a=17, b=42",
+          "// 2) Broken overwrite swap vs temp-slot swap (a=42, b=17)",
+          "a = b; b = a                    // Overwrites 42 before saving!",
+          "temp = a; a = b; b = temp       // Saves old value first",
         ],
-        output: "a=42, c=99 | box=[77, 5] | swap -> a=17, b=42",
+        output: "a=42, c=99 | box=[77, 5] | broken: a=17, b=17 | swap: a=17, b=42",
+        predictOutput: {
+          prompt: "Predict the final values of a, box, and the broken a = b; b = a swap before revealing:",
+          revealLabel: "Reveal RAM result & why",
+          why: "`c = a` copies `42` into a new slot so `a` stays `42`, whereas `alias = box` copies address `0x108` so `alias[0] = 77` mutates `box[0]` too. In `a = b; b = a`, `42` is overwritten on the first assignment, leaving both `a` and `b` equal to `17` unless saved in `temp`.",
+        },
+        deepDive: [
+          {
+            label: "Value slots vs object-reference pointers in RAM",
+            paragraphs: [
+              "A stack frame stores small fixed-size scalars directly inside the variable's slot. When you pass a scalar into a function or assign `c = a`, the CPU copies the bits into a separate slot.",
+              "A container (array, list, object, dict) lives on the heap at an address such as `0x108`. The variable itself holds only that pointer address, so `alias = box` or passing `box` to a helper lets both names read and mutate the same heap bytes.",
+            ],
+            bullets: [
+              "Value assignment (`c = a`): duplicates the payload into a new address.",
+              "Reference assignment (`alias = box`): duplicates only the pointer `0x108`.",
+              "Explicit clone (`copy = [box[0], box[1]]`): allocates new heap bytes at a fresh address.",
+            ],
+            code: [
+              "Frame slot box   -> 0x108  ---+",
+              "Frame slot alias -> 0x108  ---+--> Heap [ 9 | 5 ] at 0x108",
+              "Frame slot copy  -> 0x200  ------> Heap [ 9 | 5 ] at 0x200",
+            ],
+            codeLabel: "Memory layout",
+          },
+        ],
+        microCheck: {
+          prompt: "Starting with a = 42 and b = 17, what does a = b; b = a leave in (a, b)?",
+          code: "a = 42\nb = 17\na = b\nb = a\nprint(a, b)",
+          options: [
+            { id: "a", label: "17, 42" },
+            { id: "b", label: "17, 17" },
+            { id: "c", label: "42, 42" },
+          ],
+          correctId: "b",
+          explanation: "Assigning a = b overwrites 42 with 17 immediately, so b = a copies 17 back into b.",
+        },
+      },
+      {
+        heading: "Data structures, algorithms, and reference aliasing",
+        paragraphs: [
+          "Every data structure trades memory layout for operation speed: contiguous slots make index lookups instant, while linked nodes or hash buckets optimize inserts and key lookups.",
+          "Whenever a function receives a container reference (`0x108`), decide up front whether to mutate it in place or allocate a fresh copy.",
+        ],
         table: {
           caption: "Data structure vs algorithm vs memory model",
           headers: ["Concept", "What it governs", "Concrete example"],
@@ -49,7 +92,18 @@ export const dsaM00Lessons: Record<string, LessonContent> = {
         },
         callout: {
           kind: "KEY IDEA",
-          text: "Choosing a better algorithm often depends on knowing which operations the underlying memory layout makes cheap or expensive.",
+          text: "Choosing a better algorithm depends on knowing which operations the underlying memory layout makes cheap or expensive.",
+        },
+        microCheck: {
+          prompt: "box lives at 0x108 with [9, 5]. What does print(box[0], copy[0]) output?",
+          code: "box = [9, 5]\nalias = box\nalias[0] = 77\ncopy = [box[0], box[1]]\ncopy[0] = 12\nprint(box[0], copy[0])",
+          options: [
+            { id: "a", label: "9, 12" },
+            { id: "b", label: "12, 12" },
+            { id: "c", label: "77, 12" },
+          ],
+          correctId: "c",
+          explanation: "alias = box shares address 0x108 so alias[0] = 77 changes box[0] to 77. Then copy allocates a new container, so copy[0] = 12 leaves box[0] at 77.",
         },
       },
     ],
@@ -371,6 +425,30 @@ export const dsaM00Lessons: Record<string, LessonContent> = {
           "Giving a container a second variable name does not copy its elements. Only explicitly creating a new container separates their memory slots.",
       },
     ],
+    predictChecks: [
+      {
+        prompt: "nums lives at 0x108. What does print(nums[0], alias[0], copy[0]) output?",
+        code: "nums = [10, 20]\nalias = nums\ncopy = [nums[0], nums[1]]\nalias[0] = 99\nprint(nums[0], alias[0], copy[0])",
+        options: [
+          { id: "a", label: "10, 99, 10" },
+          { id: "b", label: "99, 99, 10" },
+          { id: "c", label: "99, 99, 99" },
+        ],
+        correctId: "b",
+        explanation: "alias points to the same 0x108 container as nums, so alias[0] = 99 updates nums[0] too. copy was allocated earlier as a separate container holding [10, 20].",
+      },
+      {
+        prompt: "What are x and y after running this swap without a temp variable?",
+        code: "x = 5\ny = 12\nx = y\ny = x\nprint(x, y)",
+        options: [
+          { id: "a", label: "12, 5" },
+          { id: "b", label: "5, 5" },
+          { id: "c", label: "12, 12" },
+        ],
+        correctId: "c",
+        explanation: "x = y overwrites 5 with 12 before y can read the original x, so y = x copies 12 into y as well.",
+      },
+    ],
     practiceTask: {
       title: "Safe Three-Variable Swap",
       tier: "Warmup",
@@ -455,11 +533,11 @@ export const dsaM00Lessons: Record<string, LessonContent> = {
     intro: {
       heading: "What is Big-O Time Complexity?",
       explanation: [
-        "Suppose a duplicate check on 10,000 IDs compares every pair in a nested loop: that takes 100,000,000 steps. Increase the list to 1,000,000 IDs and the same loop jumps to `10^12` steps and freezes. **Big-O notation** measures how step count grows with input size `n`, so you spot that wall before writing code.",
-        "Instead of timing runs in seconds on one laptop, Big-O names the growth curve (`O(1)`, `O(log n)`, `O(n)`, `O(n²)`). Here `log₂ n` is how many times you can halve `n` to reach `1`: for `1,000,000` items, halving takes about `20` steps.",
+        "Compare all pairs in 10,000 IDs and your loop runs 10^8 steps; grow to 1,000,000 IDs and it explodes to 10^12 steps and times out. **Big-O notation** tracks how operation count scales with input size `n`, independent of hardware speed.",
+        "Focus on the dominant growth curve (`O(1)`, `O(log n)`, `O(n)`, `O(n²)`). Here `log₂ n` is how many times you can halve `n` to reach `1`—about `20` steps for `1,000,000` items.",
       ],
       analogy:
-        "Finding a name in a phone list of `n` people: jumping straight to slot #5 is `O(1)`, opening the middle page repeatedly (`1000 -> 500 -> 250...`) is `O(log n)`, reading line-by-line top to bottom is `O(n)`, and comparing every person against every other person is `O(n²)`.",
+        "Finding a name in a list of `n` people: jumping straight to slot #5 is `O(1)`, repeatedly halving (`1000 -> 500 -> 250...`) is `O(log n)`, scanning top to bottom is `O(n)`, and checking every pair is `O(n²)`.",
       realWorldUses: [
         "Checking whether an `O(n²)` loop will time out when input grows from `n = 10` to `n = 100,000`",
         "Comparing two candidate approaches by operation growth rather than hardware speed",
@@ -467,28 +545,23 @@ export const dsaM00Lessons: Record<string, LessonContent> = {
     },
     sections: [
       {
-        heading: "Counting steps, halving (`log₂ n`), and dropping constants",
+        heading: "Counting steps, halving (log₂ n), and dropping constants",
         paragraphs: [
-          "Count how many times the loop runs for input size `n`. Two separate loops over `n` items plus `5` setup lines take `2n + 5` steps. Once `n` hits `100,000`, the multiplier `2` and `+ 5` barely matter compared to the linear slope, so `2n + 5` simplifies to `O(n)`.",
-          "When one loop of size `n` sits *inside* another loop of size `n` (such as comparing all pairs), total checks multiply to `n × n = n²`, giving `O(n²)`. If a loop halves `n` each step (`8 -> 4 -> 2 -> 1`), it finishes in `log₂ n` steps (`O(log n)`).",
+          "Count how loop iterations grow with `n`. Two sequential loops plus `5` setup lines take `2n + 5` steps—which simplifies to `O(n)` because the dominant term controls scaling.",
+          "Nesting an `n`-step loop inside another gives `n × n = n²` (`O(n²)`). Halving `n` each iteration (`8 -> 4 -> 2 -> 1`) finishes in `O(log n)` steps.",
         ],
-        code: [
-          "# Duplicate check on n = 10^5 (100,000) items",
-          "# Slow: nested loop checks n*(n-1)/2 ~= 5 * 10^9 pairs (times out)",
-          "for i in range(n):",
-          "    for j in range(i + 1, n):",
-          "        if ids[i] == ids[j]:",
-          "            return True",
-          "",
-          "# Fast: single pass with a seen set takes <= 10^5 steps",
-          "seen = set()",
-          "for x in ids:",
-          "    if x in seen:",
-          "        return True",
-          "    seen.add(x)",
-        ],
-        codeLabel: "Python",
-        output: "n=10^5 -> nested loop: ~5 * 10^9 steps | set pass: <= 10^5 steps (or sorted pass: ~1.7 * 10^6)",
+        visual: {
+          kind: "dsa-growth",
+          n: 16,
+          activeTier: "all",
+          tiers: [
+            { id: "const", label: "O(1)", name: "constant", steps: 1 },
+            { id: "log", label: "O(log n)", name: "logarithmic", steps: 4 },
+            { id: "linear", label: "O(n)", name: "linear", steps: 16 },
+            { id: "quad", label: "O(n²)", name: "quadratic", steps: 256 },
+          ],
+          caption: "Switch input size n (4, 16, 64, 256) or press Animate to watch O(n^2) pull away from O(n) and O(log n).",
+        },
         table: {
           caption: "Common Big-O curves compared as n increases",
           headers: ["Notation", "Name", "Steps at n = 1,000", "Steps at n = 1,000,000", "Typical operation shape"],
@@ -502,17 +575,56 @@ export const dsaM00Lessons: Record<string, LessonContent> = {
           ],
           highlightCol: 3,
         },
-        callout: {
-          kind: "RULE OF THUMB",
-          text: "Always check how many operations happen on the *worst-case* input (`n` at its maximum allowed value), not on tiny sample cases.",
+        deepDive: [
+          {
+            label: "Constant-factor & log-base invariance in Big-O",
+            paragraphs: [
+              "Big-O drops constant multipliers (`5n -> O(n)`) because as `n` grows, the ratio `(5n + 12) / n` stays bounded by a constant (`5`), whereas `n² / n = n` grows without limit.",
+              "Logarithm bases also collapse into a constant multiplier via the change-of-base identity: `log_b(n) = log_2(n) / log_2(b)`.",
+            ],
+            bullets: [
+              "`log_10(n)` and `log_2(n)` differ by a fixed factor of `log_2(10) ≈ 3.32`.",
+              "Dividing by `2` (`O(log₂ n)`) and dividing by `10` (`O(log₁₀ n)`) therefore share the same Big-O class: `O(log n)`.",
+              "Distinct input variables (`n` and `m`) do NOT drop: two separate loops stay `O(n + m)`.",
+            ],
+          },
+        ],
+        microCheck: {
+          prompt: "What is the Big-O time complexity of running two separate n-step loops one after another?",
+          code: "for i in range(n):\n    work()\nfor j in range(n):\n    work()",
+          options: [
+            { id: "a", label: "O(n)" },
+            { id: "b", label: "O(n²)" },
+            { id: "c", label: "O(log n)" },
+          ],
+          correctId: "a",
+          explanation: "Sequential loops add: n + n = 2n steps. Dropping the constant factor 2 gives O(n).",
         },
       },
       {
-        heading: "Best vs Worst Case & Reading Input-Size Signals",
+        heading: "O(n) loop vs O(1) formula & input-size budgets",
         paragraphs: [
-          "In linear search over `n` items, finding the target at index `0` is the best case (`1` step), near the middle is the average case (`n / 2` steps), and scanning every item when the target is missing is the worst case (`n` steps). Benchmarks measure the worst case so one bad input cannot stall your program.",
-          "Before coding, match the problem's max constraint `n` against the `~10^7` steps-per-second budget to rule out algorithms that will time out.",
+          "In linear search, finding the target at slot `0` is best case (`1` step), while missing it scans all `n` items (worst case). Always size your algorithm for the worst-case max `n` under a `~10^7` steps/sec budget.",
+          "Replacing an `O(n)` summation loop with Gauss's `O(1)` formula turns a `10^9`-step timeout into 3 constant-time operations.",
         ],
+        code: [
+          "# Compare slow_sum O(n) vs Gauss fast_sum O(1) at n = 1,000,000",
+          "def slow_sum(n):",
+          "    total = 0",
+          "    for i in range(1, n + 1):   # n loop iterations",
+          "        total += i",
+          "    return total",
+          "",
+          "def fast_sum(n):",
+          "    return n * (n + 1) // 2     # 3 arithmetic ops regardless of n",
+        ],
+        codeLabel: "Python",
+        output: "n = 1,000,000 -> slow_sum: 500000500000 (1,000,000 steps) | fast_sum: 500000500000 (3 steps)",
+        predictOutput: {
+          prompt: "Predict the return value and step count gap between slow_sum(1_000_000) and fast_sum(1_000_000):",
+          revealLabel: "Reveal output & why",
+          why: "Both compute `1 + 2 + ... + 1,000,000 = 500,000,500,000`. `slow_sum` executes `1,000,000` loop additions (`O(n)`), while `fast_sum` uses Gauss's closed-form identity in `3` arithmetic operations (`O(1)`).",
+        },
         table: {
           caption: "Input size `n` & code pattern -> target Big-O guide",
           headers: ["Constraint or Signal", "Fast-enough Big-O", "Watch out for", "Typical Code Shape"],
@@ -523,6 +635,21 @@ export const dsaM00Lessons: Record<string, LessonContent> = {
             ["`n <= 10^9` or repeated queries", "`O(log n)` or `O(1)`", "Even a single `O(n)` loop times out", "Halving (`n // 2`) or math formula"],
           ],
           highlightCol: 1,
+        },
+        callout: {
+          kind: "RULE OF THUMB",
+          text: "Always evaluate operations on the worst-case max `n` allowed by constraints, not on tiny sample inputs.",
+        },
+        microCheck: {
+          prompt: "A problem gives n <= 10^6 and a 1-second (~10^7 ops) limit. Which Big-O will time out?",
+          code: "// Max n = 1,000,000\n// Compare: O(log n) vs O(n log n) vs O(n^2)",
+          options: [
+            { id: "a", label: "O(log n) (~20 ops)" },
+            { id: "b", label: "O(n log n) (~2e7 ops)" },
+            { id: "c", label: "O(n²) (10^12 ops)" },
+          ],
+          correctId: "c",
+          explanation: "At n = 10^6, n² = 10^12 operations—100,000x over the ~10^7 ops/sec budget.",
         },
       },
     ],
@@ -795,6 +922,30 @@ export const dsaM00Lessons: Record<string, LessonContent> = {
         title: "Big-O vs Omega, Theta, and Amortized bounds",
         detail:
           "Textbooks write `Omega` for lower bounds, `Theta` for tight bounds, and `O` for upper bounds (in practice `O(...)` usually states the tight worst-case bound). When an occasional slow step like array resizing averages out across many fast steps, that average cost is called **amortized** `O(1)`.",
+      },
+    ],
+    predictChecks: [
+      {
+        prompt: "How many times does count_doublings(1024) print steps, and what is its Big-O class?",
+        code: "function count_doublings(n):\n    p = 1; steps = 0\n    while p < n:\n        p = p * 2\n        steps = steps + 1\n    return steps",
+        options: [
+          { id: "a", label: "10 steps, O(log n)" },
+          { id: "b", label: "512 steps, O(n)" },
+          { id: "c", label: "1024 steps, O(n)" },
+        ],
+        correctId: "a",
+        explanation: "p doubles through 1, 2, 4, 8, ..., 1024 in exactly log2(1024) = 10 iterations, which is O(log n).",
+      },
+      {
+        prompt: "A function runs one loop over array A (length n) and then a separate loop over array B (length m). What is the tightest Big-O?",
+        code: "for x in A: total += x\nfor y in B: total += y",
+        options: [
+          { id: "a", label: "O(n)" },
+          { id: "b", label: "O(n + m)" },
+          { id: "c", label: "O(n * m)" },
+        ],
+        correctId: "b",
+        explanation: "The two loops are sequential (not nested) and use independent sizes n and m, so total work is O(n + m).",
       },
     ],
     practiceTask: {

@@ -357,14 +357,16 @@ export function OutputStrip({
   title,
   output,
   emptyLabel,
+  tone = "default",
 }: {
   title: string;
   output?: string;
   emptyLabel?: string;
+  tone?: "default" | "error";
 }) {
   if (!output && !emptyLabel) return null;
   return (
-    <div className={`output-strip ${!output ? "is-empty" : ""}`}>
+    <div className={`output-strip ${!output ? "is-empty" : ""} ${tone === "error" ? "is-error" : ""}`}>
       <span>{title}</span>
       <pre>{output || emptyLabel}</pre>
     </div>

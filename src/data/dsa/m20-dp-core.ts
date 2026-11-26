@@ -8,8 +8,8 @@ export const dsaM20Lessons: Record<string, LessonContent> = {
     intro: {
       heading: "Dynamic Programming: Memoization & Tabulation",
       explanation: [
-        "Calling plain recursive `ways(50)` repeats smaller subproblems billions of times (`ways(3)` gets recomputed separately under every higher branch) and hangs for hours. Meanwhile, as `[1, 3, 4]` coins showed in Module 16, greedy local choices cannot fix that either.",
-        "**Dynamic Programming (DP)** follows one rule: *write down each subproblem answer the first time you compute it, and never compute it twice.* Checking whether a problem breaks into smaller subproblems (**Optimal Substructure**) that keep repeating (**Overlapping Subproblems**) turns exponential `O(2^n)` work into linear `O(n)` loops.",
+        "Plain recursive `ways(50)` solves the same subproblems billions of times (`ways(3)` gets recomputed from scratch under every higher branch) and hangs. Greedy local choices (`[1, 3, 4]` coins in Module 16) cannot fix overlapping branches either.",
+        "**Dynamic Programming (DP)** rests on one rule: *cache each subproblem the first time you solve it, and reuse it on every later visit.* Any problem with **Optimal Substructure** and **Overlapping Subproblems** drops from `O(2^n)` trees to `O(n)` loops.",
       ],
       analogy:
         "Computing `ways(5)` without caching is like asking two clerks to count `ways(3)` from scratch separately instead of writing `ways(3) = 3` in a shared notebook the first time anyone finishes it.",
@@ -22,12 +22,12 @@ export const dsaM20Lessons: Record<string, LessonContent> = {
       {
         heading: "Why Naive Recursion Repeats Work & How Caching Fixes It",
         paragraphs: [
-          "For **Climbing Stairs** (`1` or `2` steps at a time), concrete paths explain the base cases right away: `n = 0` has `1` path (`[]`, zero moves -> `ways[0] = 1`), `n = 1` has `1` path (`[1]` -> `ways[1] = 1`), `n = 2` has `2` (`[1, 1]`, `[2]`), and `n = 3` has `3` (`[1, 1, 1]`, `[1, 2]`, `[2, 1]`). Any path to step `i` arrives from `i - 1` or `i - 2`, so `ways(i) = ways(i - 1) + ways(i - 2)`.",
-          "Without a notebook (`memo`), `ways(5)` calls `ways(4)` and `ways(3)`, and `ways(4)` calls `ways(3)` and `ways(2)` again (`15` total calls just for `n = 5`!). Writing each finished answer in `memo` shrinks those repeating branches to one calculation per step.",
+          "In **Climbing Stairs** (`1` or `2` steps per move), step `0` has `1` empty path (`[]`), step `1` has `1` (`[1]`), step `2` has `2` (`[1, 1]`, `[2]`), and step `3` has `3`. Every path to `i` arrives from `i - 1` or `i - 2`, giving `ways(i) = ways(i - 1) + ways(i - 2)`.",
+          "Without a cache, `ways(5)` makes `15` recursive calls—solving `ways(3)` twice and `ways(2)` three times. Writing each finished value to `memo` shrinks that tree to one computation per step.",
         ],
         table: {
-          caption: "Inside naive climb(5): repeated calls vs four Climbing Stairs approaches",
-          headers: ["Subproblem in climb(5)", "Calls without cache", "With memo / dp", "Example paths or space"],
+          caption: "Inside naive climb(5): repeated calls vs cached DP",
+          headers: ["Subproblem in climb(5)", "Calls without cache", "With memo / dp", "Example paths or base case"],
           rows: [
             ["`ways(5)` / `ways(4)`", "1 / 1", "1 / 1", "`ways(5) = ways(4) + ways(3) = 8`"],
             ["`ways(3)`", "2 times", "1", "Paths: `[1,1,1]`, `[1,2]`, `[2,1]`"],
@@ -59,6 +59,18 @@ export const dsaM20Lessons: Record<string, LessonContent> = {
           formulaNote: "1D strip ways[0..5] showing each value plus the two prior entries ways[i-2] and ways[i-1] above it.",
           caption: "1D array ways[0..5]: each column computes ways[i] = ways[i - 1] + ways[i - 2].",
         },
+        microCheck: {
+          prompt: "Why must Climbing Stairs initialize `ways[0] = 1` instead of `ways[0] = 0`?",
+          code: "ways[0] ← ???\nways[1] ← 1\nways[2] ← ways[1] + ways[0]",
+          options: [
+            { id: "a", label: "Zero steps means zero ways, so ways[0] = 0 and ways[2] = 1" },
+            { id: "b", label: "There is 1 empty path at step 0, so a 2-step jump from 0 to 2 yields ways[2] = 1 + 1 = 2" },
+            { id: "c", label: "It prevents an off-by-one crash on negative indices" },
+            { id: "d", label: "It turns top-down memoization into O(1) space" },
+          ],
+          correctId: "b",
+          explanation: "Standing at step 0 counts as 1 valid empty path (taking zero moves). Setting ways[0] = 1 lets ways[2] = ways[1] + ways[0] = 1 + 1 = 2 count both [1, 1] and [2].",
+        },
         callout: {
           kind: "KEY IDEA",
           text: "Memoization (top-down with a cache) and tabulation (bottom-up with a `for` loop) compute the exact same recurrence. Tabulation uses an iterative loop so deep recursion never overflows the call stack.",
@@ -67,7 +79,7 @@ export const dsaM20Lessons: Record<string, LessonContent> = {
       {
         heading: "From Naive O(2^n) Recursion to Memo Table and O(1) Rolling State",
         paragraphs: [
-          "Compare all three code shapes side by side: plain `climb_naive` blows up in `O(2^n)`, `climb_memo` stores answers in `memo[]` to hit `O(n)`, and `climb_rolling` notices that `ways[i]` only ever reads the last two values (`prev2` and `prev1`), cutting space to `O(1)`.",
+          "Compare all three code shapes side by side: `climb_naive` blows up in `O(2^n)`, `climb_memo` caches solved states in `O(n)`, and `climb_rolling` tracks only `prev2` and `prev1` to cut space to `O(1)`.",
         ],
         code: [
           "// 1) Naive recursion: O(2^n) time — repeats calls",
@@ -76,7 +88,7 @@ export const dsaM20Lessons: Record<string, LessonContent> = {
           "    return climb_naive(i - 1) + climb_naive(i - 2)",
           "",
           "// 2) Top-Down Memoization: O(n) time, O(n) space",
-          "function climb_memo(i, memo):",
+          "function climb_memo(i, memo):   // seed memo with -1, never 0",
           "    if i <= 1: return 1",
           "    if memo[i] != -1: return memo[i]",
           "    memo[i] ← climb_memo(i - 1, memo) + climb_memo(i - 2, memo)",
@@ -88,11 +100,38 @@ export const dsaM20Lessons: Record<string, LessonContent> = {
           "    prev2 ← 1, prev1 ← 1",
           "    for i from 2 to n:",
           "        curr ← prev1 + prev2",
-          "        prev2 ← prev1",
-          "        prev1 ← curr",
+          "        prev2 ← prev1; prev1 ← curr",
           "    return prev1",
+          "",
+          "// Trace: climb_naive(5) vs blocked-step memo=[0] sentinel bug",
+          "// if blocked[i]: return 0   (if memo=[0] and check memo[i]!=0 -> cache miss!)",
         ],
         codeLabel: "Pseudocode",
+        output: "climb_naive(5) = 8 (15 calls) | climb_memo(5) = 8 (6 cached states) | memo=[0] on 0-way state: recomputes every time",
+        predictOutput: {
+          prompt: "How many total calls does `climb_naive(5)` trigger, and what fails if a blocked-stair variant uses `memo = [0]` with `if memo[i] != 0`?",
+          revealLabel: "Reveal call counts & sentinel bug",
+          why: "Without caching, climb_naive(5) makes 15 calls (1 + 9 + 5, evaluating climb(2) three times). And if a subproblem legitimately returns 0 (for example, all paths through step i are blocked), checking `memo[i] != 0` mistakes that cached 0 for 'unvisited' and recomputes the entire subtree again.",
+        },
+        visual: {
+          kind: "param-lab",
+          variant: "dp-stairs",
+          caption: "Slide n from 3 to 9 and switch strategies to compare naive call explosion, -1 memo caching, and O(1) rolling state.",
+        },
+        deepDive: [
+          {
+            label: "Deep Dive: Top-down recursion stack vs bottom-up topological order",
+            paragraphs: [
+              "Memoization and tabulation traverse the exact same DP dependency graph, just in different execution styles:",
+              "Top-down memoization starts at `n` and recurses downward lazily—useful when many states are unreachable, though deep chains like `n = 100,000` push `100,000` call-stack frames and overflow.",
+              "Bottom-up tabulation loops in **topological order** (`i = 2..n` so dependencies `i - 1` and `i - 2` are already solved), keeping call-stack depth `O(1)` and enabling `prev2, prev1` space compression.",
+            ],
+            bullets: [
+              "Use **top-down memo** when the state space is sparse and recursion depth stays small (`n <= 1,000`).",
+              "Use **bottom-up tabulation** when every subproblem is needed, `n` is large, or you want `O(1)` / `O(row)` rolling memory.",
+            ],
+          },
+        ],
         callout: {
           kind: "WATCH OUT",
           text: "Initialize a top-down `memo` table with a sentinel like `-1` (never `0`) whenever `0` is a valid subproblem answer. Checking `if memo[i] != 0` would endlessly recompute any subproblem whose true answer is `0`.",
@@ -439,6 +478,32 @@ export const dsaM20Lessons: Record<string, LessonContent> = {
         title: "Ignoring call-stack limits on large n with top-down DP",
         detail:
           "Even though top-down memoization runs in `O(n)` time, `n = 100,000` still pushes `100,000` recursive frames before returning. Switch to bottom-up iteration when `n` exceeds a few thousand.",
+      },
+    ],
+    predictChecks: [
+      {
+        prompt: "In naive recursion `climb_naive(5)` (without memoization), how many times is `climb_naive(2)` evaluated?",
+        code: "function climb_naive(i):\n    if i <= 1: return 1\n    return climb_naive(i - 1) + climb_naive(i - 2)\n\nclimb_naive(5)",
+        options: [
+          { id: "a", label: "1 time" },
+          { id: "b", label: "2 times" },
+          { id: "c", label: "3 times" },
+          { id: "d", label: "5 times" },
+        ],
+        correctId: "c",
+        explanation: "climb(5) splits into climb(4) + climb(3). climb(4) splits into climb(3) + climb(2) (1st), and each of the two climb(3) calls invokes climb(2) (2nd and 3rd)—3 total evaluations of climb(2).",
+      },
+      {
+        prompt: "Suppose step 2 is broken (`blocked[2] = true`), so `ways(2)` legitimately equals `0`. What happens when `memo` is initialized to `0` instead of `-1`?",
+        code: "memo ← [0, 0, 0, 0, 0, 0]\nfunction ways(i):\n    if i <= 1: return 1\n    if blocked[i]: return 0\n    if memo[i] != 0: return memo[i]\n    memo[i] ← ways(i - 1) + ways(i - 2)\n    return memo[i]",
+        options: [
+          { id: "a", label: "The answer becomes negative because 0 is falsy" },
+          { id: "b", label: "memo[2] stays 0, so `memo[2] != 0` fails and every caller recomputes ways(2) from scratch" },
+          { id: "c", label: "It throws an out-of-bounds error at memo[0]" },
+          { id: "d", label: "It returns 1 instead of 0 for ways(2)" },
+        ],
+        correctId: "b",
+        explanation: "When `0` is both the uncached sentinel and a valid subproblem result, `memo[i] != 0` cannot distinguish 'unsolved' from 'solved with 0 ways', causing repeated recomputation on zero-way states.",
       },
     ],
     practiceTask: {

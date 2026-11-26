@@ -3014,6 +3014,71 @@ export const m09Lessons: Record<string, LessonContent> = {
             ["`requirements.txt` / lockfile", "Pinned exact versions", "Reproducible deployments"],
           ],
         },
+        contextTabs: {
+          groupLabel: "Virtual environment commands by OS",
+          persistKey: "os",
+          tabs: [
+            {
+              id: "unix",
+              label: "macOS / Linux",
+              summary: "Activate via `.venv/bin/activate` or run `.venv/bin/python` directly.",
+              paragraphs: [
+                "POSIX virtual environments place the interpreter and helper scripts inside `.venv/bin/`.",
+              ],
+              codeLabel: "macOS / Linux shell",
+              code: [
+                "python3 -m venv .venv",
+                "source .venv/bin/activate",
+                ".venv/bin/python -m pip install -e \".[dev]\"",
+              ],
+              note: "Running `.venv/bin/python -m pip` works even without activating the shell first.",
+            },
+            {
+              id: "windows",
+              label: "Windows PowerShell",
+              summary: "Activate via `.venv\\Scripts\\Activate.ps1` (mind `ExecutionPolicy`) or run `.venv\\Scripts\\python.exe`.",
+              paragraphs: [
+                "Windows places executables in `.venv\\Scripts\\`. If PowerShell blocks `Activate.ps1`, permit signed/local scripts once with `Set-ExecutionPolicy` or call `.venv\\Scripts\\python.exe` directly.",
+              ],
+              codeLabel: "Windows PowerShell",
+              code: [
+                "py -m venv .venv",
+                "# Optional once if script execution is disabled:",
+                "# Set-ExecutionPolicy -Scope CurrentUser RemoteSigned",
+                ".\\.venv\\Scripts\\Activate.ps1",
+                ".venv\\Scripts\\python.exe -m pip install -e \".[dev]\"",
+              ],
+              note: "Calling `.venv\\Scripts\\python.exe` directly bypasses `ExecutionPolicy` prompts completely.",
+            },
+          ],
+        },
+        deepDive: [
+          {
+            label: "sys.prefix & pyvenv.cfg isolation internals",
+            paragraphs: [
+              "A `.venv` does not duplicate the entire Python installation; it writes a small `pyvenv.cfg` beside the launcher binary.",
+            ],
+            bullets: [
+              "At startup, Python sees `pyvenv.cfg` and sets `sys.prefix` to `.venv` while keeping `sys.base_prefix` pointed at the base Python.",
+              "`site.py` then wires `.venv`'s `site-packages` into `sys.path`, isolating third-party packages per project.",
+            ],
+            codeLabel: "Verify active environment in Python",
+            code: [
+              "import sys",
+              "print(\"in venv:\", sys.prefix != sys.base_prefix)",
+            ],
+          },
+          {
+            label: "Editable install (-e .) internals",
+            paragraphs: [
+              "Running `python -m pip install -e .` lets you import your own package while still editing source files.",
+            ],
+            bullets: [
+              "Instead of copying source files into `site-packages`, `pip` writes a `.pth` / editable import hook referencing your repo folder.",
+              "Code changes in `src/` take effect on the next Python run without reinstalling.",
+            ],
+          },
+        ],
       },
       {
         heading: "Global `pip` drift vs `.venv` + `python -m pip`",
@@ -3031,6 +3096,17 @@ export const m09Lessons: Record<string, LessonContent> = {
           "print(\" \".join(cmd))",
         ],
         output: ".venv/bin/python -m pip install httpx>=0.27",
+        microCheck: {
+          prompt: "On Windows PowerShell, `Activate.ps1` is blocked by `ExecutionPolicy`. Which command still installs `httpx` cleanly into `.venv`?",
+          code: "# .\\.venv\\Scripts\\Activate.ps1 failed due to ExecutionPolicy\n# Which command installs into .venv?",
+          options: [
+            { id: "a", label: "`.venv\\Scripts\\python.exe -m pip install httpx`" },
+            { id: "b", label: "`pip install httpx`" },
+            { id: "c", label: "`source .venv/bin/activate`" },
+          ],
+          correctId: "a",
+          explanation: "Calling `.venv\\Scripts\\python.exe -m pip` runs `pip` directly under the `.venv` interpreter without needing shell activation.",
+        },
       },
     ],
     guidedBuildUp: {

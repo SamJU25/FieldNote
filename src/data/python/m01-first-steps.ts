@@ -382,14 +382,30 @@ export const m01Lessons: Record<string, LessonContent> = {
           "print(1_000_000)      # _ separators make big ints readable",
         ],
         output: "<class 'int'>\n<class 'float'>\n<class 'str'>\n<class 'bool'>\n15\n1000000",
+        microCheck: {
+          prompt: "What does `print(type(\"42\"))` output?",
+          code: "print(type(\"42\"))",
+          options: [
+            { id: "a", label: "`<class 'int'>`" },
+            { id: "b", label: "`<class 'str'>`" },
+            { id: "c", label: "`42`" },
+          ],
+          correctId: "b",
+          explanation: "Anything wrapped in quotes—even digits like `\"42\"`—is a `str` (text), not an `int`.",
+        },
       },
       {
         heading: "Basic Arithmetic (`+`, `-`, `*`, `/`), Float Precision & Numeric Helpers",
         paragraphs: [
           "Use `+` to add, `-` to subtract, `*` to multiply, and `/` for standard decimal division. Whenever an expression includes `/` (even `8 / 2`) or any `float` (`5 + 2.0`), Python returns a `float` (`4.0`, `7.0`).",
-          "Python runs `*` and `/` *before* `+` and `-`. Add parentheses `(...)` whenever addition or subtraction should happen first, and reach for built-ins like `round()`, `abs()`, `min()`, and `max()` whenever you format numbers.",
-          "Watch two `float` quirks early: (1) computers store decimals in binary, so `0.1 + 0.2` prints `0.30000000000000004` (use `round(..., 2)` when formatting money); (2) on exact `.5` halves, `round()` picks the nearest **even** whole number (`round(2.5)` -> `2`, while `round(3.5)` -> `4`).",
+          "Python runs `*` and `/` *before* `+` and `-`. Add parentheses `(...)` whenever addition or subtraction should happen first, and reach for `round()`, `abs()`, `min()`, and `max()` whenever you clean or compare numbers.",
+          "Two `float` rules to keep handy: wrap currency or display totals in `round(..., 2)` because `0.1 + 0.2` carries tiny trailing digits, and note that exact `.5` halves round to the nearest **even** whole number (`round(2.5)` -> `2`, `round(3.5)` -> `4`).",
         ],
+        visual: {
+          kind: "param-lab",
+          variant: "number-rounding",
+          caption: "Explore / vs //, 0.1 + 0.2 float behavior, banker's round(), and parentheses precedence.",
+        },
         table: {
           caption: "Built-in numeric helpers",
           headers: ["Function", "What It Returns", "Example", "Output"],
@@ -402,17 +418,32 @@ export const m01Lessons: Record<string, LessonContent> = {
           highlightCol: 2,
         },
         code: [
-          "print(12 + 8)                 # 20 (int)",
-          "# Bug: expecting 8 / 2 to be int 4 -> single-slash / always returns float 4.0",
-          "print(8 / 2, type(8 / 2))     # 4.0 <class 'float'>",
-          "# Bug: 2 + 3 * 4 gives 14 when you wanted (2 + 3) * 4 = 20",
-          "print(2 + 3 * 4)              # 14 (3 * 4 runs first)",
-          "print((2 + 3) * 4)            # 20 (parentheses run first)",
-          "print(0.1 + 0.2)              # 0.30000000000000004",
-          "print(round(0.1 + 0.2, 2))    # 0.3",
-          "print(round(2.5), round(3.5)) # 2 4 (banker's rounding)",
+          "print(8 / 2, type(8 / 2))     # single-slash / always returns float",
+          "print(2 + 3 * 4)              # * runs before +",
+          "print((2 + 3) * 4)            # parentheses run first",
+          "print(0.1 + 0.2)              # raw binary float sum",
+          "print(round(0.1 + 0.2, 2))    # rounded for display",
+          "print(round(2.5), round(3.5)) # banker's rounding on .5 ties",
         ],
-        output: "20\n4.0 <class 'float'>\n14\n20\n0.30000000000000004\n0.3\n2 4",
+        output: "4.0 <class 'float'>\n14\n20\n0.30000000000000004\n0.3\n2 4",
+        predictOutput: {
+          prompt: "Predict what `8 / 2`, `0.1 + 0.2`, and `round(2.5)` print before revealing:",
+          why: "`8 / 2` returns `4.0` (`float`) because `/` always produces a float, `0.1 + 0.2` produces `0.30000000000000004` in binary floating point, and `round()` breaks exact `.5` ties to the nearest even integer (`2` and `4`).",
+        },
+        deepDive: [
+          {
+            label: "Deep dive: Why does `0.1 + 0.2` equal `0.30000000000000004` (IEEE-754)?",
+            paragraphs: [
+              "Just like `1 / 3` (`0.3333...`) cannot finish cleanly in base-10 decimals, `1 / 10` (`0.1`) and `1 / 5` (`0.2`) are repeating fractions in base-2 binary.",
+              "Python `float` uses standard 64-bit IEEE-754 binary floating point (53 bits of significand precision). Each number is stored at the closest 53-bit binary fraction, and adding those two slightly rounded binary values leaves a tiny `4e-17` remainder.",
+            ],
+            bullets: [
+              "For display: format with `round(x, 2)` or an f-string like `f\"{x:.2f}\"`.",
+              "For equality checks: use `math.isclose(0.1 + 0.2, 0.3)` instead of `==`.",
+              "For exact financial math: use `from decimal import Decimal` with strings like `Decimal(\"0.1\") + Decimal(\"0.2\")`.",
+            ],
+          },
+        ],
         callout: {
           kind: "RULE OF THUMB",
           text: "Do not guess tricky operator precedence: wrap subexpressions in `(...)` so both Python and human readers see the order immediately.",
@@ -1406,18 +1437,68 @@ export const m01Lessons: Record<string, LessonContent> = {
         heading: "Concatenation (`+`), Quotes, Escapes (`\\n`, `\\t`) & Raw Strings",
         paragraphs: [
           "Characters inside quotes form a `str`. Join strings with `+`, repeat symbols with `*`, and count characters with `len(...)` (`\"text\"` has `4`). Note the difference between an empty string `\"\"` (`len(\"\") == 0`) and a single space `\" \"` (`len(\" \") == 1`).",
-          "Wrap apostrophes in double quotes (`\"It's fine\"`), use backslash escapes (`\\n` newline, `\\t` tab, `\\\"` literal quote) inside text, and use triple quotes `\"\"\"...\"\"\"` for multi-line blocks. For Windows paths (`C:\\new\\file`), prefix with `r` (`r\"C:\\new\\file\"`) so backslashes stay literal instead of becoming newlines.",
+          "Wrap apostrophes in double quotes (`\"It's fine\"`), use backslash escapes (`\\n` newline, `\\t` tab, `\\\"` literal quote) inside text, and use triple quotes `\"\"\"...\"\"\"` for multi-line blocks. For Windows paths (`C:\\new\\log.txt`), prefix with `r` (`r\"C:\\new\\log.txt\"`) so backslashes stay literal instead of becoming newlines.",
         ],
         code: [
           "full = \"Ada\" + \" \" + \"Lovelace\"",
           "print(full, len(full))",
-          "print(len(\"\"), len(\" \"))",
-          "print(\"It's fine!\", \"She said \\\"hi\\\"\")",
-          "print(r\"C:\\new\\file\")",
-          "print(\"Line 1\\nLine 2\")",
+          "print(\"C:\\new\\log.txt\")",
+          "print(r\"C:\\new\\log.txt\")",
           "print(\"-\" * 10)",
         ],
-        output: "Ada Lovelace 12\n0 1\nIt's fine! She said \"hi\"\nC:\\new\\file\nLine 1\nLine 2\n----------",
+        output: "Ada Lovelace 12\nC:\new\\log.txt\nC:\\new\\log.txt\n----------",
+        predictOutput: {
+          prompt: "Predict what `print(\"C:\\new\\log.txt\")` prints without the `r` prefix:",
+          why: "Inside a normal string, Python reads `\\n` in `\\new` as a newline break, splitting `C:` and `ew\\log.txt` onto two lines. Prefixing `r\"...\"` disables escape sequences so every backslash stays literal.",
+        },
+        contextTabs: {
+          groupLabel: "Windows Paths vs POSIX Paths",
+          persistKey: "paths",
+          tabs: [
+            {
+              id: "windows-paths",
+              label: "Windows Paths",
+              summary: "Windows paths use `\\`, which collides with Python escapes like `\\n` and `\\t`.",
+              paragraphs: [
+                "Always use a raw string `r\"...\"` (or forward slashes `/` / `pathlib.Path`) when writing Windows paths in Python.",
+              ],
+              codeLabel: "WINDOWS PATH",
+              code: [
+                "bad = \"C:\\new\\log.txt\"     # \\n becomes a newline!",
+                "good = r\"C:\\new\\log.txt\"   # raw string keeps \\ literal",
+                "print(good)",
+              ],
+              output: "C:\\new\\log.txt",
+              note: "Note: a raw string cannot end with a single trailing backslash like `r\"C:\\dir\\\"`.",
+            },
+            {
+              id: "posix-paths",
+              label: "POSIX Paths (macOS / Linux)",
+              summary: "macOS and Linux paths use `/`, which never triggers Python backslash escapes.",
+              paragraphs: [
+                "Forward slashes never collide with `\\n` or `\\t`—and Python on Windows accepts forward slashes in file paths too.",
+              ],
+              codeLabel: "POSIX PATH",
+              code: [
+                "path = \"/Users/sam/new/log.txt\"",
+                "print(path)",
+              ],
+              output: "/Users/sam/new/log.txt",
+              note: "Forward slashes work cleanly across macOS, Linux, and Python file APIs on Windows.",
+            },
+          ],
+        },
+        microCheck: {
+          prompt: "What happens when Python runs `print(\"C:\\temp\\notes.txt\")` without `r`?",
+          code: "print(\"C:\\temp\\notes.txt\")",
+          options: [
+            { id: "a", label: "`\\t` turns into a tab space and `\\n` turns into a newline" },
+            { id: "b", label: "It prints `C:\\temp\\notes.txt` unchanged" },
+            { id: "c", label: "It raises `TypeError`" },
+          ],
+          correctId: "a",
+          explanation: "Without `r\"...\"`, Python interprets `\\t` as a tab and `\\n` as a newline. Prefix `r\"C:\\temp\\notes.txt\"` to keep both backslashes literal.",
+        },
       },
       {
         heading: "f-Strings & Format Specifiers (`:.2f`, `:,`, Align)",
@@ -1425,6 +1506,11 @@ export const m01Lessons: Record<string, LessonContent> = {
           "Place `f` right before the opening quote (`f\"...\"`) and drop any variable or expression inside `{...}` curly braces. f-strings convert values automatically, avoiding `TypeError`.",
           "After a colon `:` inside `{...}`, format numbers clearly: `:.2f` fixes 2 decimal places (`3.85`), `:,` inserts thousands separators (`12,500`), and `:,.2f` combines both (`1,250.50`).",
         ],
+        visual: {
+          kind: "param-lab",
+          variant: "fstring-format",
+          caption: "Switch between :.2f, :,.2f, :.1%, and raw r strings to preview live output.",
+        },
         table: {
           caption: "Common f-String Format Specifiers",
           headers: ["Pattern", "Input Value", "Formatted Output", "Common Use"],

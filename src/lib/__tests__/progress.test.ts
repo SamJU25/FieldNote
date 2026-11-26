@@ -129,6 +129,29 @@ describe("Progressive A-to-Z Python curriculum & progress store", () => {
               }
             }
           }
+          if (sec.contextTabs) {
+            assert.ok(sec.contextTabs.tabs.length >= 2, `Expected >=2 contextTabs in ${id}`);
+            for (const tab of sec.contextTabs.tabs) {
+              assert.ok(tab.id.length > 0 && tab.label.length > 0, `Empty contextTab metadata in ${id}`);
+              if (tab.output) {
+                assert.ok(!tab.output.includes("`"), `Raw backtick in contextTab output for ${id}`);
+              }
+            }
+          }
+          if (sec.deepDive) {
+            assert.ok(sec.deepDive.length >= 1, `Empty deepDive array in ${id}`);
+            for (const dd of sec.deepDive) {
+              assert.ok(dd.label.length > 0, `Missing deepDive label in ${id}`);
+            }
+          }
+          if (sec.predictOutput) {
+            assert.ok(Boolean(sec.output && sec.output.trim().length > 0), `predictOutput requires section output in ${id}`);
+            assert.ok(sec.predictOutput.why.trim().length > 0, `predictOutput missing why in ${id}`);
+          }
+          if (sec.microCheck) {
+            const mOptIds = new Set(sec.microCheck.options.map((o) => o.id));
+            assert.ok(mOptIds.has(sec.microCheck.correctId), `Invalid microCheck.correctId in ${id}`);
+          }
         }
         for (const step of content.guidedBuildUp?.steps ?? []) {
           if (step.activeLines) {

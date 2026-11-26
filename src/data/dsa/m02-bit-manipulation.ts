@@ -8,11 +8,11 @@ export const dsaM02Lessons: Record<string, LessonContent> = {
     intro: {
       heading: "Binary Representation & Bitwise Operators",
       explanation: [
-        "Write `if n & 1 == 0` in C++, Java, JavaScript, or Python and it evaluates `n & (1 == 0)` (`n & 0 = 0`, always false) because `==` binds tighter than `&`. Meanwhile, `(-3) % 2` gives `-1` instead of `1` in C++/JS, breaking odd-number checks. Parenthesizing `(n & 1) == 1` reads only the `2^0` bit and works consistently even on negative numbers.",
-        "Computers store every integer as a row of base-2 **bits** (`0` or `1`) with weights `1, 2, 4, 8, 16, ...`. **Bitwise operators** (`&`, `|`, `^`, `~`, `<<`, `>>`) process all bit columns in parallel inside the CPU in `O(1)` time.",
+        "Write `if n & 1 == 0` in C++, Java, JavaScript, or Python and it evaluates `n & (1 == 0)` (`n & 0 = 0`, always false) because `==` binds tighter than `&`. Meanwhile, `(-3) % 2` gives `-1` in C++/JS, breaking odd checks—while `(n & 1) == 1` reads bit `0` reliably even for negative numbers.",
+        "Every integer is stored as base-2 **bits** (`0` or `1`) with weights `1, 2, 4, 8, 16, ...`. **Bitwise operators** (`&`, `|`, `^`, `~`, `<<`, `>>`) update all bit columns in parallel in `O(1)` time.",
       ],
       analogy:
-        "A row of wall switches labeled `32, 16, 8, 4, 2, 1` represents binary digits: flipping switches ON (`1`) and adding their labels builds any non-negative integer, while bitwise operators compare or shift whole rows in one step.",
+        "Wall switches labeled `32, 16, 8, 4, 2, 1`: flipping switches ON (`1`) and adding their weights builds any non-negative integer, while bitwise operators compare or slide whole rows in one step.",
       realWorldUses: [
         "Packing multiple boolean permissions (read, write, execute) into one compact integer status field",
         "Fast parity checks, power-of-two size alignment, and halving or doubling in low-level systems",
@@ -22,9 +22,14 @@ export const dsaM02Lessons: Record<string, LessonContent> = {
       {
         heading: "Base-2 place values and bitwise operators",
         paragraphs: [
-          "To convert `13` to binary, pick the powers of `2` that sum to `13`: `8 + 4 + 1`, which turns on bits `3`, `2`, and `0` (`001101` in 6-bit form).",
-          "Bitwise operators compare aligned bit columns independently. Unlike logical `&&` or `||` (which treat any nonzero integer as `true`), `&`, `|`, and `^` compute a fresh `0` or `1` at every single bit position.",
+          "To write `13` in binary, sum powers of `2`: `8 + 4 + 1` turns on bits `3`, `2`, and `0` (`001101` in 6-bit form).",
+          "Bitwise `&`, `|`, and `^` compare aligned bit columns independently—unlike logical `&&` or `||`, they produce a fresh `0` or `1` at every bit position.",
         ],
+        visual: {
+          kind: "param-lab",
+          variant: "bitwise",
+          caption: "Drag n or click presets to inspect 8-bit two's complement bits, ~n, and the n & 1 == 0 precedence trap.",
+        },
         table: {
           caption: "Bitwise operators demonstrated with a = 6 (0110) and b = 3 (0011)",
           headers: ["Operator", "Symbol", "Bit-by-bit rule", "Example", "Decimal result"],
@@ -40,24 +45,42 @@ export const dsaM02Lessons: Record<string, LessonContent> = {
         },
         callout: {
           kind: "KEY IDEA",
-          text: "Every bit at position k >= 1 represents an even value (2, 4, 8, 16, ...). Only bit 0 (value 1) can make a number odd, so (n & 1) == 1 always checks oddness.",
+          text: "Every bit at position k >= 1 has an even weight (2, 4, 8, ...). Only bit 0 (weight 1) can make a number odd, so (n & 1) == 1 always checks oddness.",
+        },
+        microCheck: {
+          prompt: "What is the decimal result of 13 & 10 (binary 1101 & 1010)?",
+          code: "a = 13   // 1101\nb = 10   // 1010\nprint(a & b)",
+          options: [
+            { id: "a", label: "8 (1000)" },
+            { id: "b", label: "15 (1111)" },
+            { id: "c", label: "7 (0111)" },
+          ],
+          correctId: "a",
+          explanation: "Only bit 3 (weight 8) is 1 in both 1101 and 1010, so 13 & 10 = 1000 in binary = 8.",
         },
       },
       {
         heading: "Parity checks (`n & 1`) and signed bitwise NOT (`~n`)",
         paragraphs: [
-          "Masking `n & 1` zeroes out every bit above index `0` and leaves only the `2^0` bit. Even for negative integers in two's complement, `(-3) & 1` evaluates to `1`, whereas `-3 % 2` produces `-1` in languages like C, Java, and JavaScript.",
-          "Unary `~n` flips every bit in the integer word. Computers store negatives using **two's complement** (flipping every bit of nonnegative `x` in an `N`-bit signed word leaves `2^N - 1 - x`, which encodes `-(x + 1)` so `~5 == -6`, `~(-1) == 0`, and `0 & -1 == 0` across infinite leading `1`s in Python).",
+          "Masking `n & 1` zeroes every bit above index `0`, leaving only bit `0`. Even for negative two's complement integers, `(-3) & 1` equals `1`, whereas `-3 % 2` returns `-1` in C, Java, and JavaScript.",
+          "Unary `~n` flips every bit in the word, producing `~n == -(n + 1)` in two's complement (`~5 == -6`, `~(-3) == 2`). Always wrap `(n & 1)` in parentheses before `==`.",
         ],
         code: [
-          "// Broken precedence & negative modulo:",
-          "12 & 1 == 0          // Parses as 12 & (1 == 0) = 0 -> FALSE!",
-          "(-3) % 2 == 1        // In C/Java/JS: -1 == 1 -> FALSE!",
-          "// Working parenthesized bitwise parity:",
+          "// 1) Precedence bug vs parenthesized parity check",
+          "12 & 1 == 0          // Parses as 12 & (1 == 0) = 12 & 0 = 0 -> FALSE!",
           "(12 & 1) == 0        // 0 == 0 -> TRUE",
-          "((-3) & 1) == 1      // 1 == 1 -> TRUE",
+          "((-3) & 1) == 1      // 1 == 1 -> TRUE (unlike -3 % 2 == -1 in C/JS)",
+          "",
+          "// 2) Two's complement bitwise NOT: ~n == -(n + 1)",
+          "~5                   // -6",
+          "~(-3)                //  2",
         ],
-        output: "Broken: (12 & 1 == 0) -> false | Working: ((12 & 1) == 0) -> true",
+        output: "12 & 1 == 0 -> 0 (false) | (12 & 1) == 0 -> true | ~5 -> -6 | ~(-3) -> 2",
+        predictOutput: {
+          prompt: "Predict what 12 & 1 == 0, (12 & 1) == 0, ~5, and ~(-3) evaluate to before revealing:",
+          revealLabel: "Reveal bit values & why",
+          why: "`==` has higher precedence than `&`, so `12 & 1 == 0` parses as `12 & (1 == 0) = 12 & 0 = 0` (falsy). Adding parentheses forces `12 & 1` first (`0 == 0 -> true`). Meanwhile, flipping all bits in two's complement satisfies `~n == -(n + 1)`, so `~5 == -6` and `~(-3) == 2`.",
+        },
         table: {
           caption: "Comparing n & 1 against modulo and ~n in 32-bit signed integers",
           headers: ["Input `n`", "Low 4 bits", "`n & 1`", "`n % 2` (C/JS)", "`~n` (`-(n + 1)`)"],
@@ -69,9 +92,34 @@ export const dsaM02Lessons: Record<string, LessonContent> = {
           ],
           highlightCol: 2,
         },
+        deepDive: [
+          {
+            label: "Two's complement sign-bit arithmetic",
+            paragraphs: [
+              "In an `N`-bit signed integer (like 8-bit `[-128, 127]` or 32-bit `[-2^31, 2^31 - 1]`), the top bit carries weight `-2^(N-1)` instead of `+2^(N-1)`.",
+              "Flipping all `N` bits of `x` turns every `0` into `1` and `1` into `0`, whose sum with `x` is all `1`s (`-1`). Therefore `x + ~x = -1`, which rearranges directly to `~x = -(x + 1)` and `-x = ~x + 1`.",
+            ],
+            bullets: [
+              "8-bit example for `-3`: `11111101` = `-128 + 64 + 32 + 16 + 8 + 4 + 1 = -3`.",
+              "Flipping `11111101` gives `00000010` = `2`, matching `~(-3) = -(-3 + 1) = 2`.",
+              "Adding `1` to `~5` (`-6 + 1`) yields `-5`, which is how CPUs negate numbers.",
+            ],
+          },
+        ],
         callout: {
           kind: "WATCH OUT",
-          text: "In C, C++, Java, JavaScript, and Python, == binds tighter than &. Writing n & 1 == 0 parses as n & (1 == 0), which equals 0! Always write (n & 1) == 0 with parentheses.",
+          text: "In C, C++, Java, JavaScript, and Python, == binds tighter than &. Writing n & 1 == 0 parses as n & (1 == 0) = 0! Always write (n & 1) == 0.",
+        },
+        microCheck: {
+          prompt: "What does ~0 evaluate to in two's complement signed integers?",
+          code: "x = 0\nprint(~x)",
+          options: [
+            { id: "a", label: "1" },
+            { id: "b", label: "-1" },
+            { id: "c", label: "0" },
+          ],
+          correctId: "b",
+          explanation: "Flipping all bits of 0 gives all 1s, which represents -1 in two's complement (~0 = -(0 + 1) = -1).",
         },
       },
     ],
@@ -445,6 +493,30 @@ export const dsaM02Lessons: Record<string, LessonContent> = {
         title: "Shift overflow and negative right shifts",
         detail:
           "Shifting `1 << 31` or higher can overflow a signed 32-bit integer, and right-shifting negative numbers duplicates the sign bit in many languages. Use 64-bit unsigned or `1L << k` when shifts reach 31 or above.",
+      },
+    ],
+    predictChecks: [
+      {
+        prompt: "What does this Python loop print because == binds tighter than &?",
+        code: "for x in [4, 5]:\n    print(x & 1 == 0)",
+        options: [
+          { id: "a", label: "True, False" },
+          { id: "b", label: "0, 0" },
+          { id: "c", label: "1, 0" },
+        ],
+        correctId: "b",
+        explanation: "1 == 0 evaluates to False (0) first, so x & (1 == 0) becomes x & 0, printing 0 for both 4 and 5. Use (x & 1) == 0 instead.",
+      },
+      {
+        prompt: "What are the two outputs of (~12) and ((-7) & 1) in two's complement?",
+        code: "print(~12, (-7) & 1)",
+        options: [
+          { id: "a", label: "-13, 1" },
+          { id: "b", label: "-12, -1" },
+          { id: "c", label: "11, 0" },
+        ],
+        correctId: "a",
+        explanation: "Two's complement NOT gives ~12 = -(12 + 1) = -13, and -7 is odd so its lowest bit (-7) & 1 is 1.",
       },
     ],
     practiceTask: {

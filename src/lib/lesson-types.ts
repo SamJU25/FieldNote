@@ -200,6 +200,22 @@ export type InteractiveWidgetVisual =
       kind: "regex-lab";
       caption?: string;
       presets: RegexPreset[];
+    }
+  | {
+      kind: "param-lab";
+      caption?: string;
+      variant:
+        | "early-win-print"
+        | "number-rounding"
+        | "fstring-format"
+        | "bitwise"
+        | "prefix-sum"
+        | "dp-stairs";
+    }
+  | {
+      kind: "object-model-lab";
+      caption?: string;
+      variant: "self-binding" | "hash-bucket";
     };
 
 export type DsaGrowthTier = "const" | "log" | "linear" | "quad";
@@ -366,15 +382,51 @@ export type StateEntry = {
   changed?: boolean;
 };
 
+export type ContextTabItem = {
+  id: string;
+  label: string;
+  summary?: string;
+  paragraphs?: string[];
+  code?: string[];
+  codeLabel?: string;
+  output?: string;
+  note?: string;
+};
+
+export type ContextTabGroup = {
+  groupLabel: string;
+  persistKey?: string;
+  tabs: ContextTabItem[];
+};
+
+export type DeepDiveItem = {
+  label: string;
+  paragraphs?: string[];
+  bullets?: string[];
+  code?: string[];
+  codeLabel?: string;
+  note?: string;
+};
+
+export type PredictOutputPrompt = {
+  prompt?: string;
+  revealLabel?: string;
+  why: string;
+};
+
 export type LessonSection = {
   heading: string;
   paragraphs: string[];
   code?: string[];
   codeLabel?: string;
   output?: string;
+  predictOutput?: PredictOutputPrompt;
+  contextTabs?: ContextTabGroup;
   table?: ReferenceTable;
   visual?: LessonVisual;
+  deepDive?: DeepDiveItem[];
   callout?: { kind: CalloutKind; text: string };
+  microCheck?: PredictQuestion;
 };
 
 export type WalkthroughStep = {

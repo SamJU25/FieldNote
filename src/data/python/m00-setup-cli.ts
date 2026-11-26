@@ -19,40 +19,115 @@ export const m00Lessons: Record<string, LessonContent> = {
     },
     sections: [
       {
-        heading: "1. 60-second check and installing Python 3",
+        heading: "Try your first 3 Python lines right here",
         paragraphs: [
-          "A **terminal** is the text window where you type commands directly for your computer to run. To open one: on **Windows**, press the Windows key, type `PowerShell`, and press Enter; on **macOS**, press `Cmd + Space`, type `Terminal`, and press Enter; on **Linux**, press `Ctrl + Alt + T`.",
-          "Once that window is open, run `python --version` (or `python3 --version` on macOS/Linux). If any current Python 3 release prints back (`Python 3.x.y`) and your editor can run a `.py` file, you already have everything needed for the rest of this course.",
-          "If Python is not installed yet, get the current stable release from [python.org/downloads](https://www.python.org/downloads/). On **Windows**, check **`Add python.exe to PATH`** on the first installer screen (`PATH` is the list of folders your computer searches when you type a command name), click **Install Now**, then close any already-open terminal and open a fresh one so Windows picks up the updated `PATH`.",
-          "On **macOS**, install the `.pkg` from [python.org/downloads](https://www.python.org/downloads/) (or `brew install python`) and use `python3` in Terminal. On **Ubuntu/Debian**, run `sudo apt update && sudo apt install python3 python3-pip python3-venv`.",
+          "Before downloading anything, see Python in action. Python runs top-to-bottom: storing a value in `name`, printing a greeting, and repeating text or math right away.",
+          "Edit the greeting target, repeat count, or toggle options below to watch both the `hello.py` file and terminal output update live.",
         ],
-        table: {
-          caption: "Python installation and verification by OS",
-          headers: ["OS", "Install Method", "Terminal", "Verify Command"],
-          rows: [
-            ["Windows", "`.exe` from [python.org/downloads](https://www.python.org/downloads/) with **Add python.exe to PATH** checked", "`Win` -> `PowerShell`", "`python --version` or `py --version`"],
-            ["macOS", "`.pkg` from [python.org/downloads](https://www.python.org/downloads/) or `brew install python`", "`Cmd + Space` -> `Terminal`", "`python3 --version`"],
-            ["Linux (Ubuntu/Debian)", "`sudo apt update && sudo apt install python3`", "`Ctrl + Alt + T`", "`python3 --version`"],
-          ],
-          highlightCol: 3,
-        },
-        codeLabel: "TERMINAL",
-        code: [
-          "# Open a NEW terminal after installing, then check:",
-          "python --version    # Windows PowerShell / cmd",
-          "python3 --version   # macOS / Linux",
-        ],
-        output: "Python 3.x.y",
-        callout: {
-          kind: "KEY IDEA",
-          text: "**Already use Python?** If `python --version` (or `python3 --version`) prints a current Python 3 version and your editor already runs `.py` scripts, mark this lesson done and skip ahead to **Module 01** (or skim **0.2** for `Ctrl+C` and reading tracebacks).",
+        visual: {
+          kind: "param-lab",
+          variant: "early-win-print",
+          caption: "Edit the name or repeat count to preview live Python output before installing locally.",
         },
       },
       {
-        heading: "2. Editor setup (VS Code or any Python editor)",
+        heading: "2. 60-second check and installing Python 3",
+        paragraphs: [
+          "A **terminal** is the text window where you type commands for your computer to run. Pick your operating system below to check if Python 3 is already installed or install it in one pass.",
+          "If a current `Python 3.x.y` version prints back and your editor can run a `.py` file, you already have everything needed for the rest of this course.",
+        ],
+        contextTabs: {
+          groupLabel: "Choose your operating system",
+          persistKey: "os",
+          tabs: [
+            {
+              id: "windows",
+              label: "Windows",
+              summary: "Open PowerShell (`Win` key -> type `PowerShell` -> Enter) and check `python --version`.",
+              paragraphs: [
+                "If missing, download the `.exe` installer from [python.org/downloads](https://www.python.org/downloads/). On the very first screen, check **`Add python.exe to PATH`**, click **Install Now**, then open a **brand-new** PowerShell window.",
+              ],
+              codeLabel: "POWERSHELL",
+              code: [
+                "python --version    # or try: py --version",
+              ],
+              output: "Python 3.x.y",
+              note: "Always close old PowerShell windows after installing so Windows loads the updated PATH.",
+            },
+            {
+              id: "macos",
+              label: "macOS",
+              summary: "Open Terminal (`Cmd + Space` -> type `Terminal` -> Enter) and check `python3 --version`.",
+              paragraphs: [
+                "If missing, install the official `.pkg` from [python.org/downloads](https://www.python.org/downloads/) (or run `brew install python` if you use Homebrew).",
+              ],
+              codeLabel: "TERMINAL",
+              code: [
+                "python3 --version",
+              ],
+              output: "Python 3.x.y",
+              note: "On macOS, always type `python3` rather than `python`.",
+            },
+            {
+              id: "linux",
+              label: "Linux",
+              summary: "Open Terminal (`Ctrl + Alt + T`) and check `python3 --version`.",
+              paragraphs: [
+                "Most Linux distros include Python 3. On Ubuntu or Debian, install Python 3 along with `pip` and `venv` using `apt`.",
+              ],
+              codeLabel: "TERMINAL",
+              code: [
+                "sudo apt update && sudo apt install python3 python3-pip python3-venv",
+                "python3 --version",
+              ],
+              output: "Python 3.x.y",
+              note: "Use `python3` in Linux terminals to run scripts.",
+            },
+          ],
+        },
+        deepDive: [
+          {
+            label: "Deep dive: Windows opens the Microsoft Store when you type `python`",
+            paragraphs: [
+              "Windows ships placeholder shortcuts that open the Microsoft Store until Python is installed and on `PATH`.",
+            ],
+            bullets: [
+              "Quick workaround: run `py --version` (the Windows Python Launcher) instead.",
+              "Permanent fix: open Windows **Settings -> Apps -> Advanced app settings -> App execution aliases** and toggle off the `python.exe` and `python3.exe` App Installer aliases.",
+            ],
+          },
+          {
+            label: "Deep dive: Forgot to check `Add python.exe to PATH` on Windows?",
+            paragraphs: [
+              "`PATH` is the list of folders your terminal searches when you type a command name. If you skipped that checkbox, PowerShell says `'python' is not recognized`.",
+            ],
+            bullets: [
+              "Easiest fix: re-run the `.exe` installer from `python.org/downloads`, pick **Modify** (or uninstall/reinstall), and check **`Add python.exe to PATH`**.",
+              "Close any open PowerShell windows and open a fresh one before testing `python --version` again.",
+            ],
+          },
+        ],
+        callout: {
+          kind: "KEY IDEA",
+          text: "**Already use Python?** If `python --version` (or `python3 --version`) prints Python 3 and your editor runs `.py` files, mark this lesson done and jump to **Module 01** (or skim **0.2** for `Ctrl+C` and tracebacks).",
+        },
+        microCheck: {
+          prompt: "You just installed Python on Windows with `Add python.exe to PATH` checked, but the PowerShell window you opened *before* installing still says `python` is not recognized. What should you do?",
+          code: "PS C:\\Users\\Sam> python --version\npython : The term 'python' is not recognized...",
+          options: [
+            { id: "a", label: "Close that PowerShell window and open a fresh one" },
+            { id: "b", label: "Reinstall Windows" },
+            { id: "c", label: "Save your code in Microsoft Word" },
+          ],
+          correctId: "a",
+          explanation: "An already-open terminal keeps the old `PATH` snapshot from before installation. Opening a fresh terminal loads the updated `PATH`.",
+        },
+      },
+      {
+        heading: "3. Editor setup (VS Code or any Python editor)",
         paragraphs: [
           "Any code editor that saves plain `.py` files works with this course (VS Code, PyCharm, Cursor, Zed, Vim). Write code in a plain-text or code editor, never in Word or a rich-text app.",
-          "If you want a standard free setup, download [Visual Studio Code](https://code.visualstudio.com/) and install the Python extension published by Microsoft (`ms-python.python`) from Extensions (`Ctrl + Shift + X` / `Cmd + Shift + X`). Follow the [VS Code Python Tutorial](https://code.visualstudio.com/docs/python/python-tutorial) if you want full IDE reference later.",
+          "For a standard free setup, download [Visual Studio Code](https://code.visualstudio.com/) and install the Python extension by Microsoft (`ms-python.python`) from Extensions (`Ctrl + Shift + X` / `Cmd + Shift + X`).",
         ],
         table: {
           caption: "VS Code setup reference",
@@ -70,10 +145,18 @@ export const m00Lessons: Record<string, LessonContent> = {
           "python-practice/",
           "    hello.py    # open python-practice in your editor, not a bare desktop file",
         ],
-        callout: {
-          kind: "RULE OF THUMB",
-          text: "On Windows, if typing `python` opens the Microsoft Store instead of Python, run `py --version` (the Windows Launcher) or disable the Store aliases under Windows Settings -> App execution aliases.",
-        },
+        deepDive: [
+          {
+            label: "Deep dive: Windows hidden `.py.txt` file extensions",
+            paragraphs: [
+              "Windows Explorer hides known file extensions like `.txt` by default. If you create a file in Notepad named `hello.py`, Windows may silently save it as `hello.py.txt`, which Python cannot find as `hello.py`.",
+            ],
+            bullets: [
+              "Create `.py` files directly inside VS Code's Explorer panel so the extension stays `.py`.",
+              "Optional: in Windows File Explorer, turn on **View -> Show -> File name extensions** so extensions are always visible.",
+            ],
+          },
+        ],
       },
     ],
     guidedBuildUp: {
@@ -345,13 +428,47 @@ export const m00Lessons: Record<string, LessonContent> = {
     },
     sections: [
       {
-        heading: "Working directory (`cwd`) and terminal commands by OS",
+        heading: "1. Working directory (`cwd`) and terminal commands by shell",
         paragraphs: [
           "Every terminal window sits inside one specific folder called the **current working directory (`cwd`)**. When you run `python hello.py`, Python looks inside that exact folder only.",
-          "If you opened `python-practice` in VS Code (`File -> Open Folder...`) and opened VS Code's built-in terminal (`Terminal -> New Terminal`), you are already inside `python-practice/`, so run `python hello.py` directly without typing `cd python-practice` again.",
+          "If you opened `python-practice` in VS Code (`File -> Open Folder...`) and opened `Terminal -> New Terminal`, you are already inside `python-practice/`, so run `python hello.py` directly without typing `cd python-practice` again.",
         ],
+        contextTabs: {
+          groupLabel: "Choose your shell",
+          persistKey: "shell",
+          tabs: [
+            {
+              id: "ps-posix",
+              label: "PowerShell / macOS / Linux",
+              summary: "PowerShell, macOS Terminal, and Linux Bash share `pwd`, `ls`, and `cd`.",
+              codeLabel: "SHELL",
+              code: [
+                "pwd                     # print current working folder",
+                "ls                      # list files in this folder",
+                "cd python-practice      # enter a subfolder (cd .. goes up)",
+                "python hello.py         # use python3 hello.py on macOS / Linux",
+              ],
+              output: "Hello from Python!",
+              note: "Use `python3` instead of `python` on macOS and most Linux terminals.",
+            },
+            {
+              id: "win-cmd",
+              label: "Windows Command Prompt (cmd)",
+              summary: "Classic Windows `cmd` uses `cd` alone to show the folder and `dir` to list files.",
+              codeLabel: "CMD",
+              code: [
+                "cd                      # print current working folder",
+                "dir                     # list files in this folder",
+                "cd python-practice      # enter a subfolder (cd .. goes up)",
+                "python hello.py         # or: py hello.py",
+              ],
+              output: "Hello from Python!",
+              note: "If `python` is unavailable in cmd, `py hello.py` uses the Windows Python Launcher.",
+            },
+          ],
+        },
         table: {
-          caption: "Core terminal commands across Windows, macOS, and Linux",
+          caption: "Core terminal commands summary",
           headers: ["Action", "PowerShell / macOS / Linux", "Windows Command Prompt (`cmd`)"],
           rows: [
             ["Show current folder", "`pwd`", "`cd` (with nothing after it)"],
@@ -361,17 +478,20 @@ export const m00Lessons: Record<string, LessonContent> = {
             ["Run a saved script", "`python hello.py` / `python3 hello.py`", "`python hello.py` / `py hello.py`"],
           ],
         },
-        codeLabel: "TERMINAL",
-        code: [
-          "# Check current folder and files before running:",
-          "pwd                     # or 'cd' on Windows cmd",
-          "ls                      # or 'dir' on Windows cmd",
-          "python hello.py",
-        ],
-        output: "Hello from Python!",
+        microCheck: {
+          prompt: "Your VS Code terminal prompt already ends with `python-practice>`. What happens if you run `cd python-practice`?",
+          code: "PS C:\\Users\\Sam\\Desktop\\python-practice> cd python-practice",
+          options: [
+            { id: "a", label: "It refreshes the same folder" },
+            { id: "b", label: "It errors because there is no nested `python-practice` folder inside it" },
+            { id: "c", label: "It automatically runs `hello.py`" },
+          ],
+          correctId: "b",
+          explanation: "You are already inside `python-practice`, so `cd python-practice` looks for a subfolder inside it and fails. Run `ls` (or `dir`) and `python hello.py` directly.",
+        },
       },
       {
-        heading: "VS Code `▶` Play button vs terminal runs and `Ctrl+C`",
+        heading: "2. VS Code `▶` Play button vs terminal runs and `Ctrl+C`",
         paragraphs: [
           "VS Code's top-right `▶` button automatically switches to the script's directory and runs Python for you, making it convenient for single files. Typing `python script.py` manually in the terminal matters once scripts read saved data files, pause for typed input, or run larger multi-file tools.",
           "Always save changes first (`Ctrl + S` / `Cmd + S`): Python reads the saved file on disk, ignoring unsaved edits shown in an editor tab with a dot icon. If a script ever hangs or loops forever, click inside the terminal and press `Ctrl + C` to interrupt it.",
@@ -388,22 +508,36 @@ export const m00Lessons: Record<string, LessonContent> = {
         },
       },
       {
-        heading: "Reading your first error message",
+        heading: "3. Reading your first error message",
         paragraphs: [
-          "Every programmer hits error messages (`Traceback`) on day one. Start at the bottom line to read the error type and plain-English reason, then look at the `File ..., line ...` line right above it to jump straight to the problem line in VS Code.",
+          "Every programmer hits error messages (`Traceback`) on day one. Python runs lines top-to-bottom until an error stops it. Start at the bottom line of the traceback to read the error type and plain-English reason, then check `File ..., line ...` right above it.",
         ],
-        codeLabel: "TERMINAL",
+        codeLabel: "hello.py",
         code: [
-          "Traceback (most recent call last):",
-          "    File \"hello.py\", line 2, in <module>",
-          "    prnt(\"Hi\")",
-          "NameError: name 'prnt' is not defined",
+          "print(\"Start\")",
+          "prnt(\"Hi\")",
         ],
-        output: "NameError: name 'prnt' is not defined (at hello.py line 2)",
+        output: "Start\nTraceback (most recent call last):\n  File \"hello.py\", line 2, in <module>\n    prnt(\"Hi\")\nNameError: name 'prnt' is not defined",
+        predictOutput: {
+          prompt: "Predict what `hello.py` outputs when line 1 is valid (`print`) and line 2 has a typo (`prnt`):",
+          why: "Python executes top-to-bottom: line 1 prints `Start` first, then line 2 stops the program with `NameError: name 'prnt' is not defined` at `hello.py, line 2`.",
+        },
         callout: {
           kind: "KEY IDEA",
-          text: "Read Python tracebacks **bottom-up**: the bottom line tells you *what* went wrong (`NameError`), and the `File ..., line ...` line above it tells you *where* to fix it. On practice tasks you will also see `Time: O(...)` badges (Big-O shorthand explained in Module 6: `O(1)` stays instant at any size, while `O(n)` scales directly with input length `n`).",
+          text: "Read Python tracebacks **bottom-up**: the bottom line tells you *what* went wrong (`NameError`), and the `File ..., line ...` line above it tells you *where* to fix it.",
         },
+        deepDive: [
+          {
+            label: "Deep dive: What do Time O(1) and O(n) badges mean?",
+            paragraphs: [
+              "On practice exercises later in the course, you will see short `Time: O(1)` or `Time: O(n)` badges. You do not need to memorize them right now—Module 6 introduces algorithm speed in full.",
+            ],
+            bullets: [
+              "`O(1)` (constant time): runs in the same tiny number of steps no matter how big the input is.",
+              "`O(n)` (linear time): work grows directly in proportion to input length `n` (such as visiting each item in a list).",
+            ],
+          },
+        ],
       },
     ],
     guidedBuildUp: {

@@ -44,6 +44,40 @@ export const m10Lessons: Record<string, LessonContent> = {
           "print(\"after mutate in bag:\", item in bag)",
         ],
         output: "broken: unhashable type: 'BadEqOnly'\nafter mutate in bag: False",
+        predictOutput: {
+          prompt: "What happens when `{BadEqOnly(1)}` runs, and what does `item in bag` return after `item.x = 2` mutates the key?",
+          revealLabel: "Reveal output",
+          why: "Defining `__eq__` without `__hash__` sets `__hash__ = None` (`TypeError`), while mutating `item.x = 2` changes `hash(item)` so `item in bag` probes the wrong bucket and returns `False`.",
+        },
+        visual: {
+          kind: "object-model-lab",
+          variant: "hash-bucket",
+          caption: "Switch scenarios to compare __eq__ disabling __hash__, frozen key lookup, and mutated-key bucket mismatch.",
+        },
+        deepDive: [
+          {
+            label: "Open-addressing probe & equality fallback internals",
+            paragraphs: [
+              "CPython `set` and `dict` objects store entries in a compact open-addressed table rather than linked-list chains.",
+            ],
+            bullets: [
+              "Insertion starts at slot `h & mask`; if occupied by another key, CPython steps through a deterministic probe sequence (`j = (5*j + 1 + perturb) & mask`) until an empty slot appears.",
+              "Lookup checks slots along that probe sequence and succeeds only when `slot_hash == target_hash` and (`slot_key is key` or `slot_key == key`).",
+              "If `item.x` mutates after insertion, `target_hash` changes, sending lookup down a different probe path that hits an empty slot and reports `False`.",
+            ],
+          },
+        ],
+        microCheck: {
+          prompt: "Whenever `a == b` is `True` for a hashable custom class, what contract MUST `__hash__` satisfy?",
+          code: "assert a == b\n# What must also hold for set/dict lookups?",
+          options: [
+            { id: "a", label: "`hash(a) == hash(b)` must be `True`, and the hashed fields must stay immutable while in a `set`/`dict`" },
+            { id: "b", label: "`hash(a)` and `hash(b)` should differ so collisions never happen" },
+            { id: "c", label: "`__hash__` must return `None` when `__eq__` is defined" },
+          ],
+          correctId: "a",
+          explanation: "Lookup jumps to the slot for `hash(key)` before running `__eq__`; equal objects with different hashes land in different slots.",
+        },
       },
       {
         heading: "`__eq__`, `__hash__`, and `@total_ordering`",

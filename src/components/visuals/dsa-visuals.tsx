@@ -150,7 +150,7 @@ export function DsaGrowthSvg({ visual }: { visual: DsaGrowthVisual }) {
 
   useEffect(() => {
     if (!isAnimating || !isStandardGrowth) return;
-    const stops = [2, 4, 8, 16];
+    const stops = [4, 16, 64, 256];
     const timer = window.setInterval(() => {
       setOverride((prev) => {
         const current = prev?.forVisual === visual && prev.n !== null ? prev.n : visual.n;
@@ -177,7 +177,7 @@ export function DsaGrowthSvg({ visual }: { visual: DsaGrowthVisual }) {
         {isStandardGrowth && (
           <div className="dsa-control-group">
             <span className="dsa-control-label">Input size</span>
-            {[2, 4, 8, 16].map((val) => (
+            {[4, 16, 64, 256].map((val) => (
               <button
                 key={val}
                 type="button"

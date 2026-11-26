@@ -776,6 +776,86 @@ export const m07Lessons: Record<string, LessonContent> = {
           "    print(p.stem, p.suffix, p.is_file())",
         ],
         output: "app .log True",
+        contextTabs: {
+          groupLabel: "OS path & encoding defaults",
+          persistKey: "os",
+          tabs: [
+            {
+              id: "windows",
+              label: "Windows",
+              summary: "Uses `\\` separators and often defaults `open()` to `cp1252` instead of `utf-8`.",
+              paragraphs: [
+                "On Windows, omitting `encoding=\"utf-8\"` falls back to the active ANSI code page (typically `cp1252`), which raises `UnicodeEncodeError`/`UnicodeDecodeError` or produces mojibake on non-ASCII text like `café ☕`.",
+              ],
+              codeLabel: "Windows path & UTF-8 explicit",
+              code: [
+                "from pathlib import Path",
+                "p = Path(\"logs\") / \"app.log\"  # logs\\app.log",
+                "p.write_text(\"café ☕\", encoding=\"utf-8\")",
+              ],
+              note: "Always pass `encoding=\"utf-8\"` explicitly on text reads and writes.",
+            },
+            {
+              id: "unix",
+              label: "macOS / Linux",
+              summary: "Uses `/` separators and defaults `open()` to `utf-8`.",
+              paragraphs: [
+                "POSIX environments use `/` and UTF-8 by default, so forgetting `encoding=\"utf-8\"` can appear fine locally and only break when teammates or CI run on Windows or minimal `C` locales.",
+              ],
+              codeLabel: "POSIX path & UTF-8 explicit",
+              code: [
+                "from pathlib import Path",
+                "p = Path(\"logs\") / \"app.log\"  # logs/app.log",
+                "p.write_text(\"café ☕\", encoding=\"utf-8\")",
+              ],
+              note: "Passing `encoding=\"utf-8\"` keeps scripts identical across laptops, containers, and Windows.",
+            },
+          ],
+        },
+        deepDive: [
+          {
+            label: "Atomic writes with temp file + os.replace",
+            paragraphs: [
+              "Opening a file with mode `\"w\"` truncates it immediately, so a crash mid-write leaves a corrupted half-written file.",
+            ],
+            bullets: [
+              "Write to a temporary file inside `target.parent` (same filesystem).",
+              "Close it cleanly, then call `os.replace(tmp_path, target)` so readers see either the old file or the complete new file.",
+            ],
+            codeLabel: "Atomic write pattern",
+            code: [
+              "import os, tempfile",
+              "from pathlib import Path",
+              "",
+              "target = Path(\"config.json\")",
+              "with tempfile.NamedTemporaryFile(\"w\", dir=target.parent, delete=False, encoding=\"utf-8\") as tmp:",
+              "    tmp.write('{\"ok\": true}\\n')",
+              "    tmp_path = Path(tmp.name)",
+              "os.replace(tmp_path, target)",
+            ],
+          },
+          {
+            label: "Encoding fallback & errors= internals",
+            paragraphs: [
+              "When `encoding=` is omitted, Python calls `locale.getencoding()` (often `cp1252` on Windows) unless UTF-8 Mode (`-X utf8`) is enabled.",
+            ],
+            bullets: [
+              "UTF-8 bytes for `café` (`c3 a9`) happen to be valid `cp1252` characters (`Ã©`), silently corrupting text without raising an error.",
+              "For untrusted legacy logs, `encoding=\"utf-8\", errors=\"replace\"` substitutes `\\ufffd` instead of aborting.",
+            ],
+          },
+        ],
+        microCheck: {
+          prompt: "Why can `Path('data.txt').read_text()` succeed on macOS/Linux yet fail or produce mojibake on Windows?",
+          code: "Path('data.txt').write_text('café', encoding='utf-8')\n# Later without encoding=:\nPath('data.txt').read_text()",
+          options: [
+            { id: "a", label: "macOS/Linux default to `utf-8`, whereas Windows often defaults to `cp1252` when `encoding=` is omitted" },
+            { id: "b", label: "`Path.read_text()` only supports ASCII on Windows" },
+            { id: "c", label: "Windows converts `/` inside file contents into `\\`" },
+          ],
+          correctId: "a",
+          explanation: "Always pass `encoding=\"utf-8\"` to `.read_text()`, `.write_text()`, and text `.open()` so every OS uses the same encoding.",
+        },
       },
       {
         heading: "Text (`str`) vs Binary (`bytes`) — Broken vs. Fixed",

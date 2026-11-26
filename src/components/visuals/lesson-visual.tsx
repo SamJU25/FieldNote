@@ -18,6 +18,7 @@ import {
   SliceExplorer,
   TypeCastLab,
 } from "@/components/visuals/interactive-labs";
+import { ObjectModelLab, ParamLab } from "@/components/visuals/explorable-labs";
 import { LineCodePanel, handleTabKeyDown, renderInlineRich } from "@/components/visuals/rich-text";
 import type {
   ComparisonVisual,
@@ -634,6 +635,10 @@ export function LessonVisualRenderer({ visual }: { visual: LessonVisual }) {
       return <AsyncTimelineLab visual={visual} />;
     case "regex-lab":
       return <RegexLab visual={visual} />;
+    case "param-lab":
+      return <ParamLab visual={visual} />;
+    case "object-model-lab":
+      return <ObjectModelLab visual={visual} />;
     case "dsa-growth":
       return <DsaGrowthSvg visual={visual} />;
     case "dsa-array":

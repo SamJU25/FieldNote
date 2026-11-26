@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { Icon } from "@/components/icon";
 import { LessonVisualRenderer } from "@/components/visuals/lesson-visual";
 import {
@@ -20,11 +20,15 @@ import {
   type CourseModule,
 } from "@/lib/curriculum";
 import type {
+  ContextTabGroup,
+  DeepDiveItem,
   GuidedBuildUp,
   LessonContent,
   ModulePracticeSet,
   ModuleQuiz,
   PracticeChallenge,
+  PredictOutputPrompt,
+  PredictQuestion,
   ReferenceTable,
 } from "@/lib/lesson-types";
 import { QUIZ_PASS_THRESHOLD, type ConfidenceLevel, type LessonNote, type ProgressState, type QuizResult } from "@/lib/progress";
@@ -196,6 +200,249 @@ function GuidedBuildUpCard({ buildUp }: { buildUp: GuidedBuildUp }) {
   );
 }
 
+function ContextTabsView({ group }: { group: ContextTabGroup }) {
+  const uid = useId();
+  const [localId, setLocalId] = useState(group.tabs[0]?.id ?? "");
+  const panelRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const firstId = group.tabs[0]?.id ?? "";
+
+  const subscribeSync = useCallback(
+    (onStoreChange: () => void) => {
+      if (!group.persistKey || typeof window === "undefined") return () => {};
+      window.addEventListener("fn-context-tab-sync", onStoreChange);
+      return () => window.removeEventListener("fn-context-tab-sync", onStoreChange);
+    },
+    [group.persistKey],
+  );
+
+  const getClientTabId = useCallback(() => {
+    if (!group.persistKey || typeof window === "undefined") return firstId;
+    try {
+      const saved = window.sessionStorage.getItem(`fn-ctx-${group.persistKey}`);
+      if (saved && group.tabs.some((t) => t.id === saved)) return saved;
+    } catch {
+      // Ignore storage restrictions
+    }
+    return firstId;
+  }, [firstId, group.persistKey, group.tabs]);
+
+  const persistedId = useSyncExternalStore(subscribeSync, getClientTabId, () => firstId);
+  const selectedId = group.persistKey ? persistedId : localId;
+
+  const chooseTab = useCallback(
+    (tabId: string) => {
+      if (!group.persistKey) {
+        setLocalId(tabId);
+        return;
+      }
+      if (typeof window !== "undefined") {
+        try {
+          window.sessionStorage.setItem(`fn-ctx-${group.persistKey}`, tabId);
+        } catch {
+          // Ignore storage restrictions
+        }
+        window.dispatchEvent(new CustomEvent("fn-context-tab-sync"));
+      }
+    },
+    [group.persistKey],
+  );
+
+  useEffect(() => {
+    const cleanups: (() => void)[] = [];
+    for (const tab of group.tabs) {
+      const el = panelRefs.current[tab.id];
+      if (!el) continue;
+      const onMatch = () => chooseTab(tab.id);
+      el.addEventListener("beforematch", onMatch);
+      cleanups.push(() => el.removeEventListener("beforematch", onMatch));
+    }
+    return () => cleanups.forEach((fn) => fn());
+  }, [chooseTab, group.tabs]);
+
+  if (group.tabs.length === 0) return null;
+  const activeIdx = Math.max(0, group.tabs.findIndex((t) => t.id === selectedId));
+  const activeTabId = group.tabs[activeIdx].id;
+
+  return (
+    <div className="context-tabs-card">
+      <div className="context-tablist" role="tablist" aria-label={group.groupLabel}>
+        {group.tabs.map((tab, idx) => {
+          const isSelected = tab.id === activeTabId;
+          return (
+            <button
+              key={tab.id}
+              id={`${uid}-tab-${tab.id}`}
+              type="button"
+              role="tab"
+              aria-selected={isSelected}
+              tabIndex={isSelected ? 0 : -1}
+              className="context-tab-btn"
+              onClick={(e) => {
+                chooseTab(tab.id);
+                e.currentTarget.scrollIntoView({ block: "nearest", inline: "nearest" });
+              }}
+              onKeyDown={(e) =>
+                handleTabKeyDown(e, idx, group.tabs.length, (nextIdx) => {
+                  chooseTab(group.tabs[nextIdx].id);
+                })
+              }
+            >
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {group.tabs.map((tab) => {
+        const isSelected = tab.id === activeTabId;
+        return (
+          <div
+            key={tab.id}
+            ref={(node) => {
+              panelRefs.current[tab.id] = node;
+            }}
+            id={`${uid}-panel-${tab.id}`}
+            role="tabpanel"
+            aria-labelledby={`${uid}-tab-${tab.id}`}
+            tabIndex={isSelected ? 0 : undefined}
+            hidden={!isSelected ? ("until-found" as unknown as boolean) : undefined}
+            className="context-tabpanel"
+          >
+            <div className="context-tab-panel-inner">
+              {tab.summary && <p className="context-tab-summary">{renderInlineRich(tab.summary)}</p>}
+              {tab.paragraphs && tab.paragraphs.map((p, i) => <p key={i}>{renderInlineRich(p)}</p>)}
+              {tab.code && <LineCodePanel lines={tab.code} label={tab.codeLabel ?? tab.label} variant="mini" />}
+              {tab.output && <OutputStrip title="Output" output={tab.output} />}
+              {tab.note && <p className="lab-note">{renderInlineRich(tab.note)}</p>}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function DeepDiveAccordion({ items }: { items: DeepDiveItem[] }) {
+  if (items.length === 0) return null;
+  return (
+    <div className="deep-dive-group" role="group" aria-label="Deep dive technical notes">
+      {items.map((item, idx) => (
+        <details key={`${item.label}-${idx}`} className="deep-dive-item">
+          <summary className="deep-dive-summary">
+            <span>{renderInlineRich(item.label)}</span>
+          </summary>
+          <div className="deep-dive-body">
+            {item.paragraphs && item.paragraphs.map((p, i) => <p key={i}>{renderInlineRich(p)}</p>)}
+            {item.bullets && item.bullets.length > 0 && (
+              <ul className="deep-dive-bullets">
+                {item.bullets.map((b, i) => (
+                  <li key={i}>{renderInlineRich(b)}</li>
+                ))}
+              </ul>
+            )}
+            {item.code && <LineCodePanel lines={item.code} label={item.codeLabel ?? "Details"} variant="mini" />}
+            {item.note && <p className="lab-note">{renderInlineRich(item.note)}</p>}
+          </div>
+        </details>
+      ))}
+    </div>
+  );
+}
+
+function SectionPredictOutput({ output, predictOutput }: { output: string; predictOutput: PredictOutputPrompt }) {
+  const [revealed, setRevealed] = useState(false);
+
+  return (
+    <div className="predict-reveal-box">
+      <div className="predict-reveal-head">
+        <span className="predict-reveal-prompt">
+          {renderInlineRich(predictOutput.prompt ?? "Predict what this prints before revealing:")}
+        </span>
+        <button
+          type="button"
+          className="btn btn-secondary btn-sm"
+          aria-expanded={revealed}
+          onClick={() => setRevealed((v) => !v)}
+        >
+          {revealed ? "Hide output" : predictOutput.revealLabel ?? "Reveal output & why"}
+        </button>
+      </div>
+      {revealed && (
+        <>
+          <OutputStrip title="Actual output" output={output} />
+          <p className="predict-reveal-why">
+            <strong>Why:</strong> {renderInlineRich(predictOutput.why)}
+          </p>
+        </>
+      )}
+    </div>
+  );
+}
+
+function SectionMicroCheck({ check, labelId }: { check: PredictQuestion; labelId: string }) {
+  const [chosenId, setChosenId] = useState<string | null>(null);
+  const compactOpts = check.options.every((o) => o.label.length <= 28);
+
+  return (
+    <div className="micro-check-card" role="group" aria-labelledby={labelId}>
+      <span id={labelId} className="micro-check-badge">
+        Quick 10s check
+      </span>
+      <p className="micro-check-prompt">{renderInlineRich(check.prompt)}</p>
+      {check.code.trim().length > 0 && (
+        <pre className="predict-code">
+          <code>{check.code}</code>
+        </pre>
+      )}
+      <div className={`predict-options ${compactOpts ? "is-compact-grid" : ""}`} role="radiogroup" aria-labelledby={labelId}>
+        {check.options.map((opt, oIdx) => {
+          const chosen = chosenId === opt.id;
+          const answered = chosenId !== null;
+          const isCorrect = opt.id === check.correctId;
+          const tone = answered ? (isCorrect ? "is-correct" : chosen ? "is-wrong" : "") : "";
+          return (
+            <button
+              type="button"
+              role="radio"
+              aria-checked={chosen}
+              tabIndex={chosen || (!chosenId && oIdx === 0) ? 0 : -1}
+              key={opt.id}
+              className={`predict-option ${tone}`}
+              onClick={() => setChosenId(opt.id)}
+              onKeyDown={(e) => {
+                const radios = Array.from(
+                  e.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[role="radio"]') ?? [],
+                );
+                let nextIdx = -1;
+                if (e.key === "ArrowDown" || e.key === "ArrowRight") nextIdx = (oIdx + 1) % check.options.length;
+                else if (e.key === "ArrowUp" || e.key === "ArrowLeft") nextIdx = (oIdx - 1 + check.options.length) % check.options.length;
+                else if (e.key === "Home") nextIdx = 0;
+                else if (e.key === "End") nextIdx = check.options.length - 1;
+                if (nextIdx >= 0) {
+                  e.preventDefault();
+                  setChosenId(check.options[nextIdx].id);
+                  radios[nextIdx]?.focus();
+                }
+              }}
+            >
+              <span className="opt-letter">{opt.id.toUpperCase()}</span>
+              <span className="opt-label-text">{renderInlineRich(opt.label)}</span>
+              {answered && isCorrect && <Icon name="check" size={14} className="opt-status-icon is-right" />}
+              {answered && chosen && !isCorrect && <Icon name="close" size={14} className="opt-status-icon is-wrong" />}
+            </button>
+          );
+        })}
+      </div>
+      {chosenId !== null && (
+        <div className="predict-feedback">
+          <strong>{chosenId === check.correctId ? "Correct:" : "Takeaway:"}</strong>{" "}
+          {renderInlineRich(check.explanation)}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function resolveChallengeDifficulty(
   tier: string | undefined,
   isDsa: boolean,
@@ -237,6 +484,7 @@ function PracticeChallengeBody({
   onTogglePatternHint?: () => void;
   onRevisitLesson?: (lessonId: string) => void;
 }) {
+  const [checkedSteps, setCheckedSteps] = useState<Record<number, boolean>>({});
   const diff = resolveChallengeDifficulty(challenge.tier, isDsa, challengeIndex, challengeTotal);
   const showTierPill = Boolean(diff && challengeTotal <= 1);
   const showComplexityPill = Boolean(isDsa && challenge.complexity);
@@ -298,11 +546,26 @@ function PracticeChallengeBody({
         </div>
       )}
 
-      <ol className="practice-task-steps">
-        {challenge.tasks.map((task, idx) => (
-          <li key={idx}>{renderInlineRich(task)}</li>
-        ))}
-      </ol>
+      <ul className="practice-task-checklist" aria-label="Challenge steps checklist">
+        {challenge.tasks.map((task, idx) => {
+          const checked = Boolean(checkedSteps[idx]);
+          return (
+            <li key={idx}>
+              <button
+                type="button"
+                aria-pressed={checked}
+                className={`practice-check-btn ${checked ? "is-checked" : ""}`}
+                onClick={() => setCheckedSteps((prev) => ({ ...prev, [idx]: !prev[idx] }))}
+              >
+                <span className="practice-check-box" aria-hidden="true">
+                  {checked && <Icon name="check" size={12} />}
+                </span>
+                <span>{renderInlineRich(task)}</span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
 
       {challenge.starterCode && (
         <LineCodePanel
@@ -2359,7 +2622,19 @@ export function CoursesView({
             />
           )}
 
-          <OutputStrip title="Sample output" output={sec.output} />
+          {sec.output && sec.predictOutput ? (
+            <SectionPredictOutput
+              key={`${currentLesson.id}-pred-out-${sIdx}`}
+              output={sec.output}
+              predictOutput={sec.predictOutput}
+            />
+          ) : (
+            <OutputStrip title="Sample output" output={sec.output} />
+          )}
+
+          {sec.contextTabs && (
+            <ContextTabsView key={`${currentLesson.id}-ctx-${sIdx}`} group={sec.contextTabs} />
+          )}
 
           {sec.table && <ReferenceTableView table={sec.table} />}
 
@@ -2369,11 +2644,23 @@ export function CoursesView({
             </div>
           )}
 
+          {sec.deepDive && sec.deepDive.length > 0 && (
+            <DeepDiveAccordion items={sec.deepDive} />
+          )}
+
           {sec.callout && (
             <div className={`lesson-callout callout-${sec.callout.kind.toLowerCase().replace(/\s+/g, "-")}`}>
               <strong>{sec.callout.kind}</strong>
               <p>{renderInlineRich(sec.callout.text)}</p>
             </div>
+          )}
+
+          {sec.microCheck && (
+            <SectionMicroCheck
+              key={`${currentLesson.id}-micro-${sIdx}`}
+              check={sec.microCheck}
+              labelId={`${currentLesson.id}-micro-${sIdx}-lbl`}
+            />
           )}
         </section>
       ))}

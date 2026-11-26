@@ -8,8 +8,8 @@ export const dsaM03Lessons: Record<string, LessonContent> = {
     intro: {
       heading: "Static Arrays, Contiguous Access & Shifting",
       explanation: [
-        "Insert `99` at index `1` by looping forward (`for i = 1 to size - 1: arr[i + 1] = arr[i]`) and every trailing element gets overwritten by `29`—wiping out your array! Or initialize `first = 0, second = 0` to find the second largest item in `[-5, -1, -5, -3]` and it returns `0`, a number not even in the array.",
-        "A **static array** stores fixed-width elements in one unbroken RAM block so `base + i * element_size` reads any index in `O(1)`. Keeping slots gap-free means middle inserts must shift right-to-left (`O(n)`), while single-pass scans track `null`-seeded variables to avoid sorting.",
+        "Looping forward (`i = 1` to `size - 1`) to insert `99` at index `1` copies `29` over every trailing slot—wiping out your array! Or seeding `first = 0, second = 0` to find the runner-up in `[-5, -1, -5, -3]` falsely returns `0`.",
+        "A **static array** places fixed-width elements in one unbroken RAM block so `base + i * element_size` reads any slot in `O(1)`. Keeping slots gap-free means middle inserts must shift right-to-left (`O(n)`), while single-pass scans use `null`-seeded variables to skip sorting.",
       ],
       analogy:
         "Numbered theater seats in one unbroken row let you walk straight to seat #42 in one jump, whereas squeezing a latecomer into seat #2 forces everyone from seat #2 onward to slide down by one.",
@@ -22,16 +22,27 @@ export const dsaM03Lessons: Record<string, LessonContent> = {
       {
         heading: "Contiguous addressing vs shifting cost",
         paragraphs: [
-          "Suppose an integer array starts at memory address `base = 0x200` with `4` bytes per integer. Index `3` lives at `0x200 + 3 * 4 = 0x20C`, regardless of whether the array holds `5` items or `5,000,000` items.",
-          "By contrast, inserting at index `k` or deleting index `k` cannot leave an empty hole in the middle of a contiguous block. Up to `n - k` elements must move one slot over, making middle modifications `O(n)` in the worst case.",
+          "If an integer array starts at `base = 0x200` with `4` bytes per element, index `3` sits at `0x200 + 3 * 4 = 0x20C`—one multiply and add, whether the array holds `5` items or `5,000,000`.",
+          "Middle inserts and deletes cost `O(n)` because contiguous blocks cannot leave holes: up to `n - k` elements must slide one slot over. Worse, shifting **left-to-right** during an insert overwrites unread values.",
         ],
         code: [
-          "// Broken forward insert at idx=1 on [14, 29, 8, 41, _]:",
-          "for i from 1 to 3: arr[i + 1] = arr[i]   // Copies 29 into slots 2, 3, 4 -> [14, 99, 29, 29, 29]!",
-          "// Working backward insert (size - 1 down to idx):",
-          "for i from 3 down to 1: arr[i + 1] = arr[i]  // [14, 99, 29, 8, 41]",
+          "// arr = [14, 29, 8, 41, _], insert 99 at idx = 1 (size = 4)",
+          "// 1) Forward shift (buggy): i = 1..3",
+          "for i from 1 to 3: arr[i + 1] = arr[i]",
+          "arr[1] = 99",
+          "",
+          "// 2) Backward shift (fixed): i = 3 down to 1",
+          "// On a fresh [14, 29, 8, 41, _]:",
+          "for i from 3 down to 1: arr[i + 1] = arr[i]",
+          "arr[1] = 99",
         ],
+        codeLabel: "Pseudocode",
         output: "Forward shift (broken): [14, 99, 29, 29, 29] | Backward shift: [14, 99, 29, 8, 41]",
+        predictOutput: {
+          prompt: "What lands in indices 2, 3, and 4 if you loop forward (`i = 1` to `3`) before placing `99`?",
+          revealLabel: "Reveal shift trace",
+          why: "At i = 1, arr[2] = arr[1] overwrites 8 with 29 before 8 is ever read. Each next iteration copies that same 29 forward, turning [29, 8, 41] into [29, 29, 29]. Looping right-to-left (size - 1 down to idx) vacates each slot before overwriting it.",
+        },
         table: {
           caption: "Static array operation costs (capacity N, current size n)",
           headers: ["Operation", "Time", "Extra Space", "Why"],
@@ -44,6 +55,21 @@ export const dsaM03Lessons: Record<string, LessonContent> = {
           ],
           highlightCol: 1,
         },
+        deepDive: [
+          {
+            label: "Deep Dive: Contiguous cache locality vs pointer chasing",
+            paragraphs: [
+              "CPUs never pull a single `4`-byte integer from RAM—they fetch an entire **64-byte cache line** (up to `16` consecutive `int32` values) in one trip.",
+              "Because static array items sit side-by-side, reading `arr[0]` brings `arr[1..15]` into L1 cache, and hardware prefetchers stream sequential scans smoothly. Linked nodes scattered across the heap force **pointer chasing**, where each `next` jump risks a ~100 ns cache miss even though both scans are `O(n)`.",
+            ],
+            bullets: [
+              "Sequential scan on `int[10^6]`: roughly 1 cache miss per 16 elements (hardware-prefetched).",
+              "Linked traversal on `10^6` heap nodes: up to 1 cache miss per node (~10x slower in practice).",
+              "Big-O counts steps; contiguous RAM layout decides how fast each step runs.",
+            ],
+            note: "This spatial-locality advantage carries over to dynamic arrays (`list` / `vector`), covered in the next lesson.",
+          },
+        ],
         callout: {
           kind: "KEY IDEA",
           text: "Random access is `O(1)` precisely because elements sit contiguously at predictable offsets. Maintaining that gap-free layout is what makes middle inserts and deletes cost `O(n)` shifts.",
@@ -52,9 +78,21 @@ export const dsaM03Lessons: Record<string, LessonContent> = {
       {
         heading: "Single-pass scans without sorting",
         paragraphs: [
-          "Sorting an array to check order or find the second largest item wastes time (`O(n log n)`, covered in Module 11, or `O(n^2)` with nested scans). Checking if an array is non-decreasing needs only one loop from `0` to `n - 2` checking `arr[i] <= arr[i + 1]`.",
-          "Finding the distinct second largest element also finishes in one `O(n)` pass by updating two scalar variables (`first` and `second`) seeded to `null` while guarding `x < first` so duplicates like `[10, 10, 4]` return `4`.",
+          "Checking sorted order or finding the runner-up takes one `O(n)` pass—no `O(n log n)` sort required. Loop `i` from `0` to `n - 2` and return `false` the moment `arr[i] > arr[i + 1]`.",
+          "To find the distinct second largest value in `O(1)` space, seed `first = null` and `second = null` (never `0`, which breaks negative arrays) and guard `second` updates with `x < first` so duplicates like `[10, 10, 4]` return `4`.",
         ],
+        microCheck: {
+          prompt: "If you seed `first = 0, second = 0` and scan `[-5, -1, -5, -3]`, what does `second_largest` return?",
+          code: "first ← 0, second ← 0\nfor each x in [-5, -1, -5, -3]:\n    if x > first: second ← first; first ← x\n    else if x < first and x > second: second ← x\nreturn second",
+          options: [
+            { id: "a", label: "-3, because -3 is the second largest element in the array" },
+            { id: "b", label: "0, because none of the negative items exceed the 0 sentinel" },
+            { id: "c", label: "-1, because -1 is closest to 0" },
+            { id: "d", label: "null, because all elements are negative" },
+          ],
+          correctId: "b",
+          explanation: "Every element in [-5, -1, -5, -3] is less than 0, so neither `x > first` nor `x > second` ever fires. Seeding `first = null, second = null` handles arbitrary negative integers cleanly.",
+        },
         callout: {
           kind: "WATCH OUT",
           text: "When computing the distinct second largest value, skip elements equal to `first` (for example, `[10, 10, 4]` has distinct second largest `4`, not `10`), and avoid initializing variables to `0` when inputs can contain negative numbers.",
@@ -366,6 +404,32 @@ export const dsaM03Lessons: Record<string, LessonContent> = {
         title: "Duplicate max values in second-largest scans",
         detail:
           "If `first` is `50` and you see another `50`, setting `second = 50` gives the wrong distinct runner-up. Explicitly check `x < first` before updating `second`.",
+      },
+    ],
+    predictChecks: [
+      {
+        prompt: "What does `buf` hold after running this buggy forward insert at `idx = 0` (`size = 4`)?",
+        code: "buf ← [5, 10, 15, 20, _]\nfor i from 0 to 3:\n    buf[i + 1] ← buf[i]\nbuf[0] ← 99",
+        options: [
+          { id: "a", label: "[99, 5, 10, 15, 20]" },
+          { id: "b", label: "[99, 5, 5, 5, 5]" },
+          { id: "c", label: "[5, 5, 5, 5, 99]" },
+          { id: "d", label: "[99, 10, 15, 20, 20]" },
+        ],
+        correctId: "b",
+        explanation: "At i = 0, buf[1] = buf[0] overwrites 10 with 5. Each subsequent step propagates that same 5 rightward across slots 2, 3, and 4 before buf[0] becomes 99.",
+      },
+      {
+        prompt: "What does this `second_largest` snippet return on `nums = [12, 12, 7]` when the `x < first` guard is missing?",
+        code: "first ← null, second ← null\nfor each x in [12, 12, 7]:\n    if first == null or x > first:\n        second ← first; first ← x\n    else if second == null or x > second:\n        second ← x\nreturn second",
+        options: [
+          { id: "a", label: "7" },
+          { id: "b", label: "12" },
+          { id: "c", label: "null" },
+          { id: "d", label: "24" },
+        ],
+        correctId: "b",
+        explanation: "On the second 12, `x > first` is false, so execution enters the `else if` branch where `second == null` is true and sets `second = 12`. Adding `x < first` skips duplicate maximums so 7 is returned.",
       },
     ],
     practiceTask: {
@@ -1408,8 +1472,8 @@ export const dsaM03Lessons: Record<string, LessonContent> = {
     intro: {
       heading: "Prefix Sums & Difference Arrays",
       explanation: [
-        "Answering `10^5` range-sum queries `[L..R]` over `10^5` items with a loop executes `~10^10` additions and times out. Worse, building an unpadded prefix array `pref` of length `n` and querying `pref[R] - pref[L - 1]` crashes or reads the wrong end at `L = 0` (`pref[-1]`). Precomputing `pref` of length `n + 1` with `pref[0] = 0` answers any inclusive query `[L..R]` in `O(1)` via `pref[R + 1] - pref[L]`.",
-        "Its mirror image is the **difference array**: when you apply `q` range-add updates `[L..R] += v` before reading final values, record two boundary deltas (`diff[L] += v` and `diff[R + 1] -= v`) in an `n + 1` array and run one `O(n)` sweep at the end.",
+        "Looping over `[L..R]` for `10^5` range-sum queries on `10^5` items runs `~10^10` additions and times out. Worse, an unpadded prefix array `pref` of length `n` querying `pref[R] - pref[L - 1]` breaks at `L = 0` by reading `pref[-1]`. Padding `pref` to length `n + 1` with `pref[0] = 0` answers any inclusive `[L..R]` in `O(1)` via `pref[R + 1] - pref[L]`.",
+        "Its mirror image is the **difference array**: when `q` range-add updates `[L..R] += v` happen before final reads, mark two endpoints (`diff[L] += v` and `diff[R + 1] -= v`) in an `n + 1` array and run one `O(n)` sweep at the end.",
       ],
       analogy:
         "A prefix sum works like highway mile markers: distance between Exit `l` and Exit `r` is `marker[r + 1] - marker[l]`. A difference array works like posting `+5` ('put on 5 coats') entering a tunnel and `-5` ('take off 5 coats') right after leaving; walking the route once sums your coat count at every mile.",
@@ -1420,19 +1484,66 @@ export const dsaM03Lessons: Record<string, LessonContent> = {
     },
     sections: [
       {
-        heading: "Prefix sums vs difference arrays",
+        heading: "1D prefix sums & the n + 1 padding rule",
         paragraphs: [
-          "Use **prefix sums** when reads outnumber updates: spend `O(n)` once to build `pref` (`[0, 3, 2, 6, 8, 13]` for `[3, -1, 4, 2, 5]`), then answer `[1..3]` in `O(1)` via `pref[4] - pref[1] = 8 - 3 = 5`. Equilibrium/pivot index problems use the same cumulative logic in `O(1)` extra space by keeping `left_sum` and computing `right_sum = total_sum - left_sum - arr[i]`.",
-          "The exact same single-pass prefix/suffix pattern builds **prefix extremes** (`prefix_max[i] = max(prefix_max[i - 1], h[i])` left-to-right and `suffix_max[i] = max(suffix_max[i + 1], h[i])` right-to-left) in `O(n)` time, which Module 07 later uses for Trapping Rain Water.",
-          "Use **difference arrays** when batch range updates finish before the final read: allocate `diff` of length `n + 1` filled with `0` so `diff[r + 1]` stays in bounds even at `r = n - 1`, add `+v` at `l` and `-v` at `r + 1`, and accumulate a running sum across `0..n - 1` at the end.",
+          "Use **prefix sums** when reads outnumber edits: build `pref` once in `O(n)` (`[0, 3, 2, 6, 8, 13]` for `[3, -1, 4, 2, 5]`), then answer any `[L..R]` in `O(1)` via `pref[R + 1] - pref[L]`.",
+          "Without the leading `pref[0] = 0`, querying `[0..R]` evaluates `pref[0 - 1] = pref[-1]`—throwing an out-of-bounds error in C++/Java or silently reading the **last** element in Python!",
         ],
         code: [
-          "// Broken unpadded prefix query on arr = [3, -1, 4, 2, 5], query [0..2]:",
-          "// unpadded = [3, 2, 6, 8, 13] -> unpadded[2] - unpadded[-1] = 6 - 13 = -7 (BUG!)",
-          "// Working n+1 padded prefix (pref[0] = 0):",
-          "// pref = [0, 3, 2, 6, 8, 13] -> pref[3] - pref[0] = 6 - 0 = 6",
+          "arr = [3, -1, 4, 2, 5]",
+          "# 1) Unpadded prefix array (length n):",
+          "unpadded = [3, 2, 6, 8, 13]",
+          "print('Unpadded [0..2]:', unpadded[2] - unpadded[0 - 1])",
+          "",
+          "# 2) Padded n + 1 prefix array (pref[0] = 0):",
+          "pref = [0, 3, 2, 6, 8, 13]",
+          "print('Padded [0..2]:', pref[2 + 1] - pref[0])",
         ],
-        output: "Unpadded [0..2] (broken): -7 | Padded [0..2]: 6",
+        codeLabel: "Python 3",
+        output: "Unpadded [0..2]: -7\nPadded [0..2]: 6",
+        predictOutput: {
+          prompt: "In Python, negative indices wrap from the end. What does `unpadded[2] - unpadded[0 - 1]` evaluate to for `[3, -1, 4, 2, 5]`?",
+          revealLabel: "Reveal L = 0 trap output",
+          why: "At L = 0, unpadded[0 - 1] becomes unpadded[-1] = 13 (the total sum at the end of the array), so unpadded[2] - unpadded[-1] computes 6 - 13 = -7 instead of 3 + (-1) + 4 = 6. Padding pref[0] = 0 makes pref[r + 1] - pref[0] evaluate 6 - 0 = 6 with zero special cases.",
+        },
+        visual: {
+          kind: "param-lab",
+          variant: "prefix-sum",
+          caption: "Drag L and R or toggle Unpadded vs n+1 Padded to test the L = 0 negative-index trap live.",
+        },
+        deepDive: [
+          {
+            label: "Deep Dive: 2D inclusion-exclusion prefix sums",
+            paragraphs: [
+              "The `n + 1` padding trick extends straight to 2D matrices using an `(R + 1) x (C + 1)` grid whose row `0` and column `0` are all `0`. Cell `pref[r + 1][c + 1]` stores the sum of rectangle `(0, 0)..(r, c)`.",
+              "When building or querying a sub-rectangle `(r1, c1)..(r2, c2)`, subtracting the top strip and left strip removes their overlapping upper-left corner **twice**—so inclusion-exclusion adds that corner back once.",
+            ],
+            code: [
+              "// Build (1-indexed inside (R+1) x (C+1) table):",
+              "pref[r + 1][c + 1] = mat[r][c] + pref[r][c + 1] + pref[r + 1][c] - pref[r][c]",
+              "",
+              "// O(1) sub-rectangle query for [r1..r2, c1..c2]:",
+              "box = pref[r2 + 1][c2 + 1] - pref[r1][c2 + 1] - pref[r2 + 1][c1] + pref[r1][c1]",
+            ],
+            codeLabel: "Pseudocode",
+            bullets: [
+              "Subtract `pref[r1][c2 + 1]` (rows strictly above `r1`) and `pref[r2 + 1][c1]` (cols strictly left of `c1`).",
+              "Add back `pref[r1][c1]` because `[0..r1-1, 0..c1-1]` was subtracted twice.",
+              "Total cost: `O(R * C)` build, `O(1)` per 2D rectangle query.",
+            ],
+          },
+        ],
+        callout: {
+          kind: "KEY IDEA",
+          text: "Always give `pref` length `n + 1` with `pref[0] = 0`. That padding makes `pref[r + 1] - pref[l]` work uniformly for every `l >= 0` with zero `if l == 0` special cases.",
+        },
+      },
+      {
+        heading: "Pivot scans, prefix extremes, and difference arrays",
+        paragraphs: [
+          "Cumulative reasoning also powers `O(1)`-space **pivot scans** (`right_sum = total - left_sum - arr[i]`) and `O(n)` **prefix/suffix extremes** (`prefix_max[i] = max(prefix_max[i - 1], h[i])`), which Module 07 uses for Trapping Rain Water.",
+          "When batch range updates `[L..R] += v` finish before final reads, invert the pattern with a **difference array** of length `n + 1`: add `+v` at `diff[L]`, subtract `-v` at `diff[R + 1]`, and sweep once across `0..n - 1`.",
+        ],
         table: {
           caption: "Comparing naive loops vs prefix sums vs difference arrays",
           headers: ["Workload (`n` items, `q` ops)", "Naive loop", "Prefix / Difference pattern", "Speedup"],
@@ -1443,9 +1554,17 @@ export const dsaM03Lessons: Record<string, LessonContent> = {
           ],
           highlightCol: 2,
         },
-        callout: {
-          kind: "KEY IDEA",
-          text: "Always give `pref` length `n + 1` with `pref[0] = 0`. That padding makes `pref[r + 1] - pref[l]` work uniformly for every `l >= 0` with zero `if l == 0` special cases.",
+        microCheck: {
+          prompt: "Starting from `n = 5` zeros (`diff` length `6`: `[0, 0, 0, 0, 0, 0]`), apply `[1..3] += 4` then `[2..4] += 2`. What does `diff` hold before the sweep?",
+          code: "diff = [0, 0, 0, 0, 0, 0]\ndiff[1] += 4; diff[4] -= 4\ndiff[2] += 2; diff[5] -= 2",
+          options: [
+            { id: "a", label: "[0, 4, 2, 0, -4, -2]" },
+            { id: "b", label: "[0, 4, 6, 6, 2, 0]" },
+            { id: "c", label: "[0, 4, 2, -4, -2, 0]" },
+            { id: "d", label: "[4, 2, 0, -4, -2, 0]" },
+          ],
+          correctId: "a",
+          explanation: "Each range update writes only two boundary deltas: +4 at index 1 and -4 at index 4 (3 + 1), plus +2 at index 2 and -2 at index 5 (4 + 1). Sweeping the running sum afterward produces [0, 4, 6, 6, 2].",
         },
       },
     ],

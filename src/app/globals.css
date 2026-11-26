@@ -5913,9 +5913,45 @@ button {
   border: 1px solid var(--line);
   background: var(--surface);
   box-shadow: var(--shadow);
-  overflow: hidden;
+  overflow: clip;
   display: flex;
   flex-direction: column;
+}
+
+.guided-buildup-card .stepper-head-wrap {
+  position: static;
+  z-index: auto;
+}
+
+.guided-buildup-card .step-dots {
+  gap: 8px;
+}
+
+.guided-buildup-card .step-tab {
+  height: auto;
+  min-height: 30px;
+  max-width: 100%;
+  padding: 5px 12px;
+  border-radius: 14px;
+  line-height: 1.35;
+  text-align: left;
+  justify-content: flex-start;
+}
+
+.guided-buildup-card .step-tab::after {
+  display: none;
+}
+
+.guided-buildup-card .step-tab-text {
+  display: inline;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.step-tab.is-active .inline-code {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.28);
+  color: #ffffff;
 }
 
 .buildup-body {
@@ -7256,6 +7292,17 @@ button {
   .step-tab,
   .lab-pill-btn {
     flex-shrink: 0;
+  }
+
+  .guided-buildup-card .step-dots {
+    flex-wrap: wrap;
+    overflow-x: visible;
+    padding-bottom: 0;
+  }
+
+  .guided-buildup-card .step-tab {
+    flex-shrink: 1;
+    width: auto;
   }
 }
 

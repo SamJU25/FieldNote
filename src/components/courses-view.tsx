@@ -124,6 +124,7 @@ function GuidedBuildUpCard({ buildUp }: { buildUp: GuidedBuildUp }) {
           <div className="step-dots" role="tablist" aria-label="Code-along steps">
             {steps.map((s, i) => {
               const selected = i === safeIdx;
+              const cleanLabel = s.label.replace(/^Step\s+\d+\s*:\s*/i, "");
               return (
                 <button
                   key={`${s.label}-${i}`}
@@ -137,7 +138,9 @@ function GuidedBuildUpCard({ buildUp }: { buildUp: GuidedBuildUp }) {
                   onClick={() => setIdx(i)}
                   onKeyDown={(e) => handleTabKeyDown(e, i, steps.length, setIdx)}
                 >
-                  {i + 1}. {renderInlineRich(s.label)}
+                  <span className="step-tab-text">
+                    {i + 1}. {renderInlineRich(cleanLabel)}
+                  </span>
                 </button>
               );
             })}

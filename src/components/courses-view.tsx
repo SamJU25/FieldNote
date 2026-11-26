@@ -2725,16 +2725,6 @@ export function CoursesView({
           <div className="lesson-quick-actions">
             <button
               type="button"
-              className={`btn btn-sm ${isDone ? "btn-success" : "btn-secondary"}`}
-              aria-pressed={isDone}
-              onClick={() => onToggleComplete(currentLesson.id)}
-            >
-              <Icon name="check" size={15} />
-              <span>{isDone ? "Completed" : "Mark done"}</span>
-            </button>
-
-            <button
-              type="button"
               className="btn btn-secondary btn-sm"
               aria-expanded={notesOpen}
               aria-controls="lesson-note-drawer"
@@ -3081,41 +3071,24 @@ export function CoursesView({
           </div>
         )}
 
-        {/* Bottom Completion Prompt & Prev / Next Cards */}
+        {/* Bottom Completion Toggle & Prev / Next Navigation */}
         <div className="lesson-complete-bar">
           <div>
             <strong>{isDone ? "Lesson completed" : "Finished reading & practicing?"}</strong>
             <span>
               {isDone
-                ? "Marked complete in your tracker."
-                : "Mark this lesson done before moving on."}
+                ? "Saved in your study tracker."
+                : "Record this lesson as complete in your tracker."}
             </span>
           </div>
           <button
             type="button"
             className={`btn btn-sm ${isDone ? "btn-success" : "btn-primary"}`}
             aria-pressed={isDone}
-            onClick={() => {
-              if (!isDone) {
-                onToggleComplete(currentLesson.id);
-              }
-              if (nextLesson) {
-                onSelectLesson(activeCourse.id, nextLesson.id);
-              } else {
-                onSelectQuiz(activeCourse.id, currentMeta.module.id, { tab: "practice" });
-              }
-            }}
+            onClick={() => onToggleComplete(currentLesson.id)}
           >
             <Icon name="check" size={15} />
-            <span>
-              {isDone
-                ? nextLesson
-                  ? "Next lesson"
-                  : "Open assessment"
-                : nextLesson
-                  ? "Complete & next lesson"
-                  : "Complete & open assessment"}
-            </span>
+            <span>{isDone ? "Completed" : "Mark lesson done"}</span>
           </button>
         </div>
 

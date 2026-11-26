@@ -5586,12 +5586,12 @@ button {
   gap: 2px;
 }
 
-.lesson-complete-bar strong {
+.lesson-complete-bar > div strong {
   font-size: 0.94rem;
   font-weight: 600;
 }
 
-.lesson-complete-bar span {
+.lesson-complete-bar > div span {
   font-size: 0.84rem;
   color: var(--muted);
 }
@@ -7342,6 +7342,9 @@ button {
   .session-link-btn,
   .dsa-dp-cell-btn,
   .why-course-details summary,
+  .context-tab-btn,
+  .deep-dive-summary,
+  .practice-check-btn,
   .text-link-btn:not(.inline-nudge-link) {
     min-height: 44px;
   }
@@ -7851,10 +7854,8 @@ textarea:focus-visible {
 
 .micro-check-badge {
   display: inline-block;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-size: 0.78rem;
+  font-weight: 600;
   color: var(--accent);
 }
 
@@ -7988,7 +7989,7 @@ textarea:focus-visible {
 }
 
 .dsa-array-cell.is-dim {
-  opacity: 0.42;
+  opacity: 0.72;
 }
 
 .practice-task-checklist {

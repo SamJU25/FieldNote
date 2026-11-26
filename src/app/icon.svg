@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <mask id="fn-icon-cut">
+      <rect width="64" height="64" fill="black"/>
+      <path
+        d="M21 12H35.2V22.4A3.6 3.6 0 0 0 38.8 26H48V47.6A4.4 4.4 0 0 1 43.6 52H20.4A4.4 4.4 0 0 1 16 47.6V17A5 5 0 0 1 21 12Z"
+        fill="white"
+      />
+      <path
+        d="M21.5 39.2C26 33.4 31.4 33.2 35.4 37.2C38.4 40.2 40.9 40.1 43.2 37.6"
+        stroke="black"
+        stroke-width="4.4"
+        stroke-linecap="round"
+        fill="none"
+      />
+    </mask>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="#121822"/>
+  <rect x="14" y="10" width="36" height="44" fill="#eef2f8" mask="url(#fn-icon-cut)"/>
+  <path d="M38.4 12.6L47.8 22H40.1A1.7 1.7 0 0 1 38.4 20.3V12.6Z" fill="#6c8ff2"/>
+</svg>

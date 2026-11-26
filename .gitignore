@@ -1,0 +1,15 @@
+node_modules
+.next
+out
+build
+.DS_Store
+*.log
+.env
+.env.*
+!.env.example
+.vercel
+coverage
+tsconfig.tsbuildinfo
+graphify-out
+*.pdf
+

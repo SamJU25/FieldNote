@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="1280" height="720" fill="none">
+  <defs>
+    <radialGradient id="dsa-glow" cx="50%" cy="46%" r="58%">
+      <stop offset="0%" stop-color="#1b2944" />
+      <stop offset="100%" stop-color="#0d1422" />
+    </radialGradient>
+    <pattern id="dsa-grid" width="44" height="44" patternUnits="userSpaceOnUse">
+      <path d="M 44 0 L 0 0 0 44" stroke="#ffffff" stroke-opacity="0.045" stroke-width="1" />
+      <circle cx="0" cy="0" r="1.4" fill="#ffffff" fill-opacity="0.1" />
+    </pattern>
+    <pattern id="dsa-hatch" width="10" height="10" patternTransform="rotate(35)" patternUnits="userSpaceOnUse">
+      <line x1="0" y1="0" x2="0" y2="10" stroke="#f26b4f" stroke-opacity="0.72" stroke-width="3.6" />
+    </pattern>
+  </defs>
+
+  <rect width="1280" height="720" fill="url(#dsa-glow)" />
+  <rect width="1280" height="720" fill="url(#dsa-grid)" />
+
+  <!-- Subtle architectural blueprint circles -->
+  <circle cx="640" cy="360" r="248" stroke="#5b7cfa" stroke-opacity="0.14" stroke-width="1.2" stroke-dasharray="6 8" />
+  <circle cx="640" cy="360" r="158" stroke="#ffffff" stroke-opacity="0.07" stroke-width="1" />
+
+  <!-- Isometric Base Platform -->
+  <g transform="translate(0, 12)">
+    <!-- Left front face -->
+    <polygon points="416,420 640,536 640,572 416,456" fill="#182338" stroke="#2c3c5c" stroke-width="1.5" />
+    <!-- Right front face -->
+    <polygon points="864,420 640,536 640,572 864,456" fill="#131c2e" stroke="#2c3c5c" stroke-width="1.5" />
+    <polygon points="864,420 640,536 640,572 864,456" fill="url(#dsa-hatch)" opacity="0.32" />
+    <!-- Top face -->
+    <polygon points="640,304 864,420 640,536 416,420" fill="#1e2b44" stroke="#3b4f78" stroke-width="1.5" />
+  </g>
+
+  <!-- Step Block 1 (Front Left - Slate & Coral Accent) -->
+  <g transform="translate(-110, 44)">
+    <polygon points="560,340 620,372 620,404 560,372" fill="#d4563d" />
+    <polygon points="680,340 620,372 620,404 680,372" fill="#a83d28" />
+    <polygon points="620,308 680,340 620,372 560,340" fill="#f26b4f" stroke="#ff967f" stroke-width="1.2" />
+  </g>
+
+  <!-- Step Block 2 (Center - Indigo Stair) -->
+  <g transform="translate(0, -18)">
+    <polygon points="570,330 640,368 640,420 570,382" fill="#415cd1" />
+    <polygon points="710,330 640,368 640,420 710,382" fill="#2e43a6" />
+    <polygon points="640,292 710,330 640,368 570,330" fill="#5b7cfa" stroke="#90a8ff" stroke-width="1.2" />
+  </g>
+
+  <!-- Step Block 3 (Back Right - Elevated Ivory-Slate Peak) -->
+  <g transform="translate(114, -76)">
+    <polygon points="576,318 640,352 640,424 576,390" fill="#cdd7e8" />
+    <polygon points="704,318 640,352 640,424 704,390" fill="#8f9db5" />
+    <polygon points="704,318 640,352 640,424 704,390" fill="url(#dsa-hatch)" opacity="0.55" />
+    <polygon points="640,284 704,318 640,352 576,318" fill="#eef3fc" stroke="#ffffff" stroke-width="1.3" />
+  </g>
+
+  <!-- Connected Graph / Tree Arc Overlay -->
+  <path d="M 510 384 C 555 245, 695 215, 754 226" stroke="#f26b4f" stroke-opacity="0.85" stroke-width="2.5" stroke-dasharray="6 6" />
+  <path d="M 510 384 L 640 312 L 754 226" stroke="#90a8ff" stroke-opacity="0.6" stroke-width="2" />
+
+  <!-- Floating Tactile Nodes -->
+  <circle cx="510" cy="384" r="14" fill="#131c2e" stroke="#f26b4f" stroke-width="3" />
+  <circle cx="510" cy="384" r="5" fill="#f26b4f" />
+
+  <circle cx="640" cy="312" r="15" fill="#131c2e" stroke="#5b7cfa" stroke-width="3" />
+  <circle cx="640" cy="312" r="5.5" fill="#90a8ff" />
+
+  <circle cx="754" cy="226" r="16" fill="#131c2e" stroke="#eef3fc" stroke-width="3" />
+  <circle cx="754" cy="226" r="6" fill="#f26b4f" />
+</svg>

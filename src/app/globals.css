@@ -2241,7 +2241,6 @@ button {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-width: 68ch;
 }
 
 .lesson-intro-body p {
@@ -2473,10 +2472,6 @@ button {
   display: flex;
   flex-direction: column;
   gap: 16px;
-}
-
-.step-prose {
-  max-width: 68ch;
 }
 
 .step-prose p {
@@ -5530,10 +5525,6 @@ button {
   border-top: none;
 }
 
-.guided-section p {
-  max-width: 68ch;
-}
-
 .guided-section h2 {
   margin: 0;
   font-size: 1.24rem;
@@ -5943,8 +5934,8 @@ button {
 .buildup-explain {
   margin: 0;
   font-size: 0.94rem;
+  line-height: 1.6;
   color: var(--ink-soft);
-  max-width: 68ch;
 }
 
 /* Interactive Labs (Operator, Type Cast, Slice, Loop, Memory Sim) */
